@@ -1,6 +1,6 @@
 import ktem.db.base_models as base_models
 from ktem.db.engine import engine
-from sqlmodel import SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 from theflow.settings import settings
 from theflow.utils.modules import import_dotted_string
 
@@ -14,6 +14,12 @@ _base_user = (
     import_dotted_string(settings.KH_TABLE_USER, safe=False)
     if hasattr(settings, "KH_TABLE_USER")
     else base_models.BaseUser
+)
+
+_base_agent = (
+    import_dotted_string(settings.KH_TABLE_AGENT, safe=False)
+    if hasattr(settings, "KH_TABLE_AGENT")
+    else base_models.BaseAgent
 )
 
 _base_settings = (
@@ -32,10 +38,33 @@ _base_issue_report = (
 class Conversation(_base_conv, table=True):  # type: ignore
     """Conversation record"""
 
+class UserAgentCreated(SQLModel, table=True):
+    """Link table between users and agents they created"""
+    user_id: str | None = Field(default=None, foreign_key="user.id", primary_key=True)
+    agent_id: str | None = Field(default=None, foreign_key="agent.id", primary_key=True)
+
+class UserAgentAccessible(SQLModel, table=True):
+    """Link table between users and agents they can access"""
+    user_id: str | None = Field(default=None, foreign_key="user.id", primary_key=True)
+    agent_id: str | None = Field(default=None, foreign_key="agent.id", primary_key=True)
 
 class User(_base_user, table=True):  # type: ignore
     """User table"""
+    created_agents: list["Agent"] = Relationship(
+        back_populates="creators", link_model=UserAgentCreated
+    )
+    accessible_agents: list["Agent"] = Relationship(
+        back_populates="users", link_model=UserAgentAccessible
+    )
 
+class Agent(_base_agent, table=True):  # type: ignore
+    """Agent table"""
+    creators: list[User] = Relationship(
+        back_populates="created_agents", link_model=UserAgentCreated
+    )
+    users: list[User] = Relationship(
+        back_populates="accessible_agents", link_model=UserAgentAccessible
+    )
 
 class Settings(_base_settings, table=True):  # type: ignore
     """Record of settings"""

@@ -4,7 +4,7 @@ from typing import Optional
 from enum import Enum
 
 from sqlalchemy import JSON, Column
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 from tzlocal import get_localzone
 
 
@@ -44,10 +44,12 @@ class BaseConversation(SQLModel):
         default_factory=lambda: datetime.datetime.now(get_localzone())
     )
 
+
 class Role(str, Enum):
     CHAT_USER = "chat_user"
     AGENT_CREATOR = "agent_creator"
     ADMIN = "admin"
+
 
 class BaseUser(SQLModel):
     """Store the user information
@@ -67,6 +69,18 @@ class BaseUser(SQLModel):
     username_lower: str = Field(unique=True)
     password: str
     role: Role = Field(default=Role.CHAT_USER)
+
+
+class BaseAgent(SQLModel):
+    """Store the agent information"""
+
+    __table_args__ = {"extend_existing": True}
+
+    id: str = Field(
+        default_factory=lambda: uuid.uuid4().hex, primary_key=True, index=True
+    )
+    name: str = Field(default="Untitled Agent")
+    description: Optional[str] = Field(default=None)
 
 
 class BaseSettings(SQLModel):
