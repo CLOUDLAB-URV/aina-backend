@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from typing import Optional
+from enum import Enum
 
 from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
@@ -43,6 +44,10 @@ class BaseConversation(SQLModel):
         default_factory=lambda: datetime.datetime.now(get_localzone())
     )
 
+class Role(str, Enum):
+    CHAT_USER = "chat_user"
+    AGENT_CREATOR = "agent_creator"
+    ADMIN = "admin"
 
 class BaseUser(SQLModel):
     """Store the user information
@@ -61,7 +66,7 @@ class BaseUser(SQLModel):
     username: str = Field(unique=True)
     username_lower: str = Field(unique=True)
     password: str
-    admin: bool = Field(default=False)
+    role: Role = Field(default=Role.CHAT_USER)
 
 
 class BaseSettings(SQLModel):

@@ -3,6 +3,7 @@ import hashlib
 import gradio as gr
 import pandas as pd
 from ktem.app import BasePage
+from ktem.db.base_models import Role
 from ktem.db.models import User, engine
 from sqlmodel import Session, select
 from theflow.settings import settings as flowsettings
@@ -109,7 +110,7 @@ def create_user(usn, pwd, user_id=None, is_admin=True) -> bool:
                 username=usn,
                 username_lower=usn.lower(),
                 password=hashed_password,
-                admin=is_admin,
+                role=Role.ADMIN if is_admin else Role.CHAT_USER,
             )
             session.add(user)
             session.commit()
@@ -136,7 +137,7 @@ class UserManagement(BasePage):
         with gr.Tab(label="User list"):
             self.state_user_list = gr.State(value=None)
             self.user_list = gr.DataFrame(
-                headers=["id", "name", "admin"],
+                headers=["id", "name", "role"],
                 column_widths=[0, 50, 50],
                 interactive=False,
             )
@@ -150,7 +151,11 @@ class UserManagement(BasePage):
                         label="Confirm change password",
                         type="password",
                     )
-                self.admin_edit = gr.Checkbox(label="Admin")
+                self.role_edit = gr.Dropdown(
+                    label="Role",
+                    choices=[role.value for role in Role],
+                    value=Role.CHAT_USER.value,
+                )
 
             with gr.Row(visible=False) as self._selected_panel_btn:
                 with gr.Column():
@@ -208,7 +213,7 @@ class UserManagement(BasePage):
                 self.usn_edit,
                 self.pwd_edit,
                 self.pwd_cnf_edit,
-                self.admin_edit,
+                self.role_edit,
             ],
             show_progress="hidden",
         )
@@ -245,7 +250,7 @@ class UserManagement(BasePage):
                 self.usn_edit,
                 self.pwd_edit,
                 self.pwd_cnf_edit,
-                self.admin_edit,
+                self.role_edit,
             ],
             outputs=[self.pwd_edit, self.pwd_cnf_edit],
             show_progress="hidden",
@@ -315,27 +320,27 @@ class UserManagement(BasePage):
     def list_users(self, user_id):
         if user_id is None:
             return [], pd.DataFrame.from_records(
-                [{"id": "-", "username": "-", "admin": "-"}]
+                [{"id": "-", "username": "-", "role": "-"}]
             )
 
         with Session(engine) as session:
             statement = select(User).where(User.id == user_id)
             user = session.exec(statement).one()
-            if not user.admin:
+            if not user.role == Role.ADMIN:
                 return [], pd.DataFrame.from_records(
-                    [{"id": "-", "username": "-", "admin": "-"}]
+                    [{"id": "-", "username": "-", "role": "-"}]
                 )
 
             statement = select(User)
             results = [
-                {"id": user.id, "username": user.username, "admin": user.admin}
+                {"id": user.id, "username": user.username, "role": user.role.value}
                 for user in session.exec(statement).all()
             ]
             if results:
                 user_list = pd.DataFrame.from_records(results)
             else:
                 user_list = pd.DataFrame.from_records(
-                    [{"id": "-", "username": "-", "admin": "-"}]
+                    [{"id": "-", "username": "-", "role": "-"}]
                 )
 
         return results, user_list
@@ -360,7 +365,7 @@ class UserManagement(BasePage):
             usn_edit = gr.update(value="")
             pwd_edit = gr.update(value="")
             pwd_cnf_edit = gr.update(value="")
-            admin_edit = gr.update(value=False)
+            role_edit = gr.update(value=Role.CHAT_USER.value)
         else:
             _selected_panel = gr.update(visible=True)
             _selected_panel_btn = gr.update(visible=True)
@@ -375,7 +380,7 @@ class UserManagement(BasePage):
             usn_edit = gr.update(value=user.username)
             pwd_edit = gr.update(value="")
             pwd_cnf_edit = gr.update(value="")
-            admin_edit = gr.update(value=user.admin)
+            role_edit = gr.update(value=user.role.value)
 
         return (
             _selected_panel,
@@ -386,7 +391,7 @@ class UserManagement(BasePage):
             usn_edit,
             pwd_edit,
             pwd_cnf_edit,
-            admin_edit,
+            role_edit,
         )
 
     def on_btn_delete_click(self, selected_user_id):
@@ -403,7 +408,7 @@ class UserManagement(BasePage):
 
         return btn_delete, btn_delete_yes, btn_delete_no
 
-    def save_user(self, selected_user_id, usn, pwd, pwd_cnf, admin):
+    def save_user(self, selected_user_id, usn, pwd, pwd_cnf, role):
         errors = validate_username(usn)
         if errors:
             gr.Warning(errors)
@@ -420,7 +425,7 @@ class UserManagement(BasePage):
             user = session.exec(statement).one()
             user.username = usn
             user.username_lower = usn.lower()
-            user.admin = admin
+            user.role = Role(role)
             if pwd:
                 user.password = hashlib.sha256(pwd.encode()).hexdigest()
             session.commit()

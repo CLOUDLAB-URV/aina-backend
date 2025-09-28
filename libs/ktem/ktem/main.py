@@ -1,6 +1,7 @@
 import gradio as gr
 from decouple import config
 from ktem.app import BaseApp
+from ktem.db.base_models import Role
 from ktem.pages.chat import ChatPage
 from ktem.pages.help import HelpPage
 from ktem.pages.resources import ResourcesTab
@@ -153,7 +154,7 @@ class App(BaseApp):
                             for k in self._tabs.keys()
                         )
 
-                    is_admin = user.admin
+                    is_admin = user.role == Role.ADMIN
 
                 tabs_update = []
                 for k in self._tabs.keys():

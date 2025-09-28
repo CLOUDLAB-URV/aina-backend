@@ -1,5 +1,6 @@
 import gradio as gr
 from ktem.app import BasePage
+from ktem.db.base_models import Role
 from ktem.db.models import User, engine
 from ktem.embeddings.ui import EmbeddingManagement
 from ktem.index.ui import IndexManagement
@@ -58,7 +59,7 @@ class ResourcesTab(BasePage):
         """Show/hide the user management, depending on the user's role"""
         with Session(engine) as session:
             user = session.exec(select(User).where(User.id == user_id)).first()
-            if user and user.admin:
+            if user and user.role == Role.ADMIN:
                 return gr.update(visible=True)
 
             return gr.update(visible=False)
