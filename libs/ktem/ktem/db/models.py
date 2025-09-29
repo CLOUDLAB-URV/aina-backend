@@ -40,16 +40,19 @@ class Conversation(_base_conv, table=True):  # type: ignore
 
 class UserAgentCreated(SQLModel, table=True):
     """Link table between users and agents they created"""
-    user_id: str | None = Field(default=None, foreign_key="user.id", primary_key=True)
+    __table_args__ = {"extend_existing": True}
+    user_id: str | None = Field(default=None, foreign_key="usertable.id", primary_key=True)
     agent_id: str | None = Field(default=None, foreign_key="agent.id", primary_key=True)
 
 class UserAgentAccessible(SQLModel, table=True):
     """Link table between users and agents they can access"""
-    user_id: str | None = Field(default=None, foreign_key="user.id", primary_key=True)
+    __table_args__ = {"extend_existing": True}
+    user_id: str | None = Field(default=None, foreign_key="usertable.id", primary_key=True)
     agent_id: str | None = Field(default=None, foreign_key="agent.id", primary_key=True)
 
 class User(_base_user, table=True):  # type: ignore
     """User table"""
+    __tablename__ = "usertable" # user is a reserved keyword in some databases
     created_agents: list["Agent"] = Relationship(
         back_populates="creators", link_model=UserAgentCreated
     )

@@ -1,7 +1,7 @@
 import datetime
 import uuid
-from typing import Optional
 from enum import Enum
+from typing import Optional
 
 from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
