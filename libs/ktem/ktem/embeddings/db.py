@@ -1,24 +1,23 @@
-from typing import Type
+from typing import Type, TYPE_CHECKING
 
 from ktem.db.engine import engine
-from sqlalchemy import JSON, Boolean, Column, String
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import JSON, Column
+from sqlmodel import SQLModel, Field, Relationship
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import import_dotted_string
 
 
-class Base(DeclarativeBase):
-    pass
+if TYPE_CHECKING:
+    from ktem.db.models import Agent
 
-
-class BaseEmbeddingTable(Base):
+class BaseEmbeddingTable(SQLModel):
     """Base table to store language model"""
 
     __abstract__ = True
 
-    name = Column(String, primary_key=True, unique=True)
-    spec = Column(JSON, default={})
-    default = Column(Boolean, default=False)
+    name: str = Field(primary_key=True, unique=True)
+    spec: dict = Field(default={}, sa_column=Column(JSON))
+    default: bool = Field(default=False)
 
 
 _base_llm: Type[BaseEmbeddingTable] = (
@@ -28,8 +27,9 @@ _base_llm: Type[BaseEmbeddingTable] = (
 )
 
 
-class EmbeddingTable(_base_llm):  # type: ignore
+class EmbeddingTable(_base_llm, table=True):  # type: ignore
     __tablename__ = "embedding"
+    agents: list["Agent"] = Relationship(back_populates="embedding")
 
 
 if not getattr(flowsettings, "KH_ENABLE_ALEMBIC", False):

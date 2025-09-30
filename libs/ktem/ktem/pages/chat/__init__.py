@@ -435,6 +435,7 @@ class ChatPage(BasePage):
                     self.chat_control.conversation_id,
                     self.chat_control.conversation_rn,
                     self.first_selector_choices,
+                    self.chat_control.selected_agent,
                 ],
                 outputs=[
                     self.chat_panel.text_input,
@@ -919,6 +920,7 @@ class ChatPage(BasePage):
         conv_id,
         conv_name,
         first_selector_choices,
+        selected_agent,
         request: gr.Request,
     ):
         """Submit a message to the chatbot"""
@@ -991,7 +993,7 @@ class ChatPage(BasePage):
 
         if not conv_id:
             if not KH_DEMO_MODE:
-                id_, update = self.chat_control.new_conv(user_id)
+                id_, update = self.chat_control.new_conv(user_id, selected_agent)
                 with Session(engine) as session:
                     statement = select(Conversation).where(Conversation.id == id_)
                     name = session.exec(statement).one().name

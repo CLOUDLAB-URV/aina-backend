@@ -1,8 +1,11 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from ktem.db.engine import engine
 from sqlalchemy import JSON, Column
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from ktem.db.models import Agent
 
 
 # TODO: simplify with using SQLAlchemy directly
@@ -14,6 +17,6 @@ class Index(SQLModel, table=True):
     name: str = Field(unique=True)
     index_type: str = Field()
     config: dict = Field(default={}, sa_column=Column(JSON))
-
+    agents: list["Agent"] = Relationship(back_populates="index")
 
 Index.metadata.create_all(engine)

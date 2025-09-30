@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 
 from .users import AgentUsers
 from .control import AgentControl
+from .dropdown import AgentSettings
 
 class AgentsTab(BasePage):
     def __init__(self, app):
@@ -19,4 +20,5 @@ class AgentsTab(BasePage):
             with gr.Column(scale=1):
                 self.agent_control = AgentControl(self._app, self.selected_agent)
                 self.agent_users = AgentUsers(self._app, self.selected_agent)
+                self.agent_settings = AgentSettings(self._app, self.selected_agent)
             # with gr.Column(scale=3):

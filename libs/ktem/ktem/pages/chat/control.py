@@ -247,7 +247,7 @@ class ConversationControl(BasePage):
                     )
                 )
                 if agent_id:
-                    statement = statement.where(Conversation.agent == agent_id)
+                    statement = statement.where(Conversation.agent_id == agent_id)
                 statement = statement.order_by(
                     Conversation.is_public.desc(), Conversation.date_created.desc()
                 )  # type: ignore
@@ -303,12 +303,16 @@ class ConversationControl(BasePage):
         if user_id is None:
             gr.Warning("Please sign in first (Settings → User Settings)")
             return None, gr.update()
+        if not agent_id:
+            gr.Warning("Please select an agent first.")
+            return None, gr.update()
         with Session(engine) as session:
             new_conv = Conversation(user=user_id)
-            if agent_id:
-                agent = session.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
-                if agent:
-                    new_conv.agent = agent
+            agent = session.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
+            if not agent:
+                gr.Warning("Selected agent not found.")
+                return None, gr.update()
+            new_conv.agent = agent
             session.add(new_conv)
             session.commit()
 

@@ -1,6 +1,9 @@
 from typing import Optional
 import ktem.db.base_models as base_models
 from ktem.db.engine import engine
+from ktem.index.models import Index
+from ktem.llms.db import LLMTable
+from ktem.embeddings.db import EmbeddingTable
 from sqlmodel import Field, Relationship, SQLModel
 from theflow.settings import settings
 from theflow.utils.modules import import_dotted_string
@@ -41,17 +44,20 @@ class Conversation(_base_conv, table=True):  # type: ignore
     agent_id: str | None = Field(default=None, foreign_key="agent.id")
     agent: Optional["Agent"] = Relationship(back_populates="conversations")
 
+
 class UserAgentCreated(SQLModel, table=True):
     """Link table between users and agents they created"""
     __table_args__ = {"extend_existing": True}
     user_id: str | None = Field(default=None, foreign_key="usertable.id", primary_key=True)
     agent_id: str | None = Field(default=None, foreign_key="agent.id", primary_key=True)
 
+
 class UserAgentAccessible(SQLModel, table=True):
     """Link table between users and agents they can access"""
     __table_args__ = {"extend_existing": True}
     user_id: str | None = Field(default=None, foreign_key="usertable.id", primary_key=True)
     agent_id: str | None = Field(default=None, foreign_key="agent.id", primary_key=True)
+
 
 class User(_base_user, table=True):  # type: ignore
     """User table"""
@@ -71,7 +77,18 @@ class Agent(_base_agent, table=True):  # type: ignore
     users: list[User] = Relationship(
         back_populates="accessible_agents", link_model=UserAgentAccessible
     )
+
     conversations: list[Conversation] = Relationship(back_populates="agent")
+
+    index_id: Optional[int] = Field(default=None, foreign_key="ktem__index.id")
+    index: Optional["Index"] = Relationship(back_populates="agents")
+
+    model_name: Optional[str] = Field(default=None, foreign_key="llm_table.name")
+    model: Optional["LLMTable"] = Relationship(back_populates="agents")
+
+    embedding_name: Optional[str] = Field(default=None, foreign_key="embedding.name")
+    embedding: Optional["EmbeddingTable"] = Relationship(back_populates="agents")
+
 
 class Settings(_base_settings, table=True):  # type: ignore
     """Record of settings"""
