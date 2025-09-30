@@ -719,6 +719,7 @@ class ChatPage(BasePage):
                 self.chat_control.selected_agent,
                 self.chat_control.conversation_id,
                 self.chat_control.conversation,
+                self.model_type,
             ],
         ).then(
             self.chat_control.select_conv,
@@ -1068,7 +1069,6 @@ class ChatPage(BasePage):
                     "outputs": [
                         self.chat_control.conversation,
                         self.chat_control.agent_dropdown,
-                        self.chat_control.selected_agent,
                     ],
                     "show_progress": "hidden",
                 },

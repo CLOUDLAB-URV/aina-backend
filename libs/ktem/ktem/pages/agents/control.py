@@ -93,9 +93,8 @@ class AgentControl(BasePage):
 
     def refresh_agent_list(self, user_id):
         agents = load_agents_created(user_id)
-        selected_agent = agents[0].id if len(agents) > 0 else None
         agents = [(a.name, a.id) for a in agents]
-        return gr.update(choices=agents, value=selected_agent), selected_agent
+        return gr.update(choices=agents)
 
     def select_agent(self, user_id, agent_id):
         if not user_id:
@@ -319,7 +318,6 @@ class AgentControl(BasePage):
                 "inputs": [self._app.user_id],
                 "outputs": [
                     self.agent_dropdown,
-                    self.selected_agent,
                 ],
                 "show_progress": "hidden",
             },

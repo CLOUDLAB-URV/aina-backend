@@ -268,15 +268,11 @@ class ConversationControl(BasePage):
 
     def on_sign_in(self, user_id):
         agents = load_agents_accessible(user_id)
-        selected_agent = agents[0].id if len(agents) > 0 else None
-        if not selected_agent:
-            gr.Warning("No agents available.")
         agents = [(a.name, a.id) for a in agents]
         agent_dropdown = gr.update(
             choices=agents,
-            value=selected_agent,
         )
-        return self.reload_conv(user_id, selected_agent), agent_dropdown, selected_agent
+        return self.reload_conv(user_id, None), agent_dropdown
 
     def select_agent(self, user_id, agent_id):
         selected_agent = None
@@ -285,11 +281,22 @@ class ConversationControl(BasePage):
             agent = session.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
             if not agent:
                 gr.Warning("Selected agent not found.")
-                return selected_agent, conversation_id, gr.update(choices=[], value=conversation_id)
+                return (
+                    selected_agent,
+                    conversation_id,
+                    gr.update(choices=[], value=conversation_id),
+                    gr.update(),
+                )
             selected_agent = agent.id
+            model_type = agent.model_name
 
         conv_list = self.load_chat_history(user_id, agent_id)
-        return selected_agent, conversation_id, gr.update(choices=conv_list, value=conversation_id)
+        return (
+            selected_agent,
+            conversation_id,
+            gr.update(choices=conv_list, value=conversation_id),
+            gr.update(value=model_type),
+        )
 
     def reload_conv(self, user_id, agent_id):
         conv_list = self.load_chat_history(user_id, agent_id)
