@@ -81,6 +81,9 @@ class BaseAgent(SQLModel):
     )
     name: str = Field(default="Untitled Agent")
     description: Optional[str] = Field(default=None)
+    date_created: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(get_localzone())
+    )
 
 
 class BaseSettings(SQLModel):

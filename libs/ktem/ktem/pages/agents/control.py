@@ -12,6 +12,7 @@ from .common import (
     check_user_permissions_write,
     check_user_permissions_read,
     can_create_agent,
+    load_agents,
 )
 
 logger = logging.getLogger(__name__)
@@ -91,29 +92,10 @@ class AgentControl(BasePage):
             )
 
     def refresh_agent_list(self, user_id):
-        agents = self.load_agents(user_id)
-        agents = [(agent.name, agent.id) for agent in agents]
-        return gr.update(choices=agents, value=None)
-
-    def load_agents(self, user_id):
-        if not user_id:
-            return []
-
-        with Session(engine) as session:
-            user = session.exec(select(User).where(User.id == user_id)).first()
-            if user is None:
-                return []
-
-            if user.role == Role.ADMIN:
-                agents = session.exec(select(Agent)).all()
-            elif user.role == Role.AGENT_CREATOR:
-                agents = session.exec(
-                    select(Agent).where(Agent.creators.contains([user.id]))
-                ).all()
-            else:
-                return []
-
-            return agents
+        agents = load_agents(user_id)
+        selected_agent = agents[0].id if len(agents) > 0 else None
+        agents = [(a.name, a.id) for a in agents]
+        return gr.update(choices=agents, value=selected_agent), selected_agent
 
     def select_agent(self, user_id, agent_id):
         if not user_id:
@@ -174,7 +156,7 @@ class AgentControl(BasePage):
             session.commit()
             agent_id = new_agent.id
 
-        agents = self.load_agents(user_id)
+        agents = load_agents(user_id)
         agents = [(agent.name, agent.id) for agent in agents]
         return gr.update(choices=agents, value=agent_id), agent_id, agent_name
 
@@ -200,7 +182,7 @@ class AgentControl(BasePage):
             session.delete(agent)
             session.commit()
 
-        agents = self.load_agents(user_id)
+        agents = load_agents(user_id)
         agents = [(agent.name, agent.id) for agent in agents]
         return gr.update(choices=agents, value=None), None
 
@@ -335,7 +317,10 @@ class AgentControl(BasePage):
             definition={
                 "fn": self.refresh_agent_list,
                 "inputs": [self._app.user_id],
-                "outputs": [self.agent_dropdown],
+                "outputs": [
+                    self.agent_dropdown,
+                    self.selected_agent,
+                ],
                 "show_progress": "hidden",
             },
         )

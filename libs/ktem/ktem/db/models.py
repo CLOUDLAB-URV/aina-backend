@@ -1,3 +1,4 @@
+from typing import Optional
 import ktem.db.base_models as base_models
 from ktem.db.engine import engine
 from sqlmodel import Field, Relationship, SQLModel
@@ -37,6 +38,8 @@ _base_issue_report = (
 
 class Conversation(_base_conv, table=True):  # type: ignore
     """Conversation record"""
+    agent_id: str | None = Field(default=None, foreign_key="agent.id")
+    agent: Optional["Agent"] = Relationship(back_populates="conversations")
 
 class UserAgentCreated(SQLModel, table=True):
     """Link table between users and agents they created"""
@@ -68,6 +71,7 @@ class Agent(_base_agent, table=True):  # type: ignore
     users: list[User] = Relationship(
         back_populates="accessible_agents", link_model=UserAgentAccessible
     )
+    conversations: list[Conversation] = Relationship(back_populates="agent")
 
 class Settings(_base_settings, table=True):  # type: ignore
     """Record of settings"""

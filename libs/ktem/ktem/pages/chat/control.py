@@ -10,6 +10,7 @@ from sqlmodel import Session, or_, select
 import flowsettings
 
 from ...utils.conversation import sync_retrieval_n_message
+from ...pages.agents.common import load_agents
 from .chat_suggestion import ChatSuggestion
 from .common import STATE
 
@@ -50,6 +51,18 @@ class ConversationControl(BasePage):
         self.on_building_ui()
 
     def on_building_ui(self):
+        gr.Markdown("## Agents")
+        self.selected_agent = gr.State(value=None)
+        self.agent_dropdown = gr.Dropdown(
+            label="Select Agent",
+            choices=[],
+            value=None,
+            container=False,
+            filterable=True,
+            interactive=True,
+            elem_classes=["unset-overflow"],
+            # elem_id="agent-dropdown",
+        )
         with gr.Row():
             title_text = "Conversations" if not KH_DEMO_MODE else "Kotaemon Papers"
             gr.Markdown("## {}".format(title_text))
@@ -248,6 +261,18 @@ class ConversationControl(BasePage):
                 options.append((result.name, result.id))
 
         return options
+
+    def on_sign_in(self, user_id):
+        agents = load_agents(user_id)
+        selected_agent = agents[0].id if len(agents) > 0 else None
+        if not selected_agent:
+            gr.Warning("No agents available.")
+        agents = [(a.name, a.id) for a in agents]
+        agent_dropdown = gr.update(
+            choices=agents,
+            value=selected_agent,
+        )
+        return self.reload_conv(user_id), agent_dropdown, selected_agent
 
     def reload_conv(self, user_id):
         conv_list = self.load_chat_history(user_id)

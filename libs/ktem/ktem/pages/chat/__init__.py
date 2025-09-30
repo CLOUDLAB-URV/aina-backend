@@ -1021,9 +1021,13 @@ class ChatPage(BasePage):
             self._app.subscribe_event(
                 name="onSignIn",
                 definition={
-                    "fn": self.chat_control.reload_conv,
+                    "fn": self.chat_control.on_sign_in,
                     "inputs": [self._app.user_id],
-                    "outputs": [self.chat_control.conversation],
+                    "outputs": [
+                        self.chat_control.conversation,
+                        self.chat_control.agent_dropdown,
+                        self.chat_control.selected_agent,
+                    ],
                     "show_progress": "hidden",
                 },
             )
