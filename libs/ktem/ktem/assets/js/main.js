@@ -19,6 +19,10 @@ function run() {
   favicon.href = "/favicon.ico";
   document.head.appendChild(favicon);
 
+  // setup agent dropdown placeholder
+  let agent_dropdown = document.querySelector("#agent-dropdown input");
+  agent_dropdown.placeholder = "Select agent";
+
   // setup conversation dropdown placeholder
   let conv_dropdown = document.querySelector("#conversation-dropdown input");
   conv_dropdown.placeholder = "Browse conversation";

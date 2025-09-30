@@ -61,7 +61,7 @@ class ConversationControl(BasePage):
             filterable=True,
             interactive=True,
             elem_classes=["unset-overflow"],
-            # elem_id="agent-dropdown",
+            elem_id="agent-dropdown",
         )
         with gr.Row():
             title_text = "Conversations" if not KH_DEMO_MODE else "Kotaemon Papers"
