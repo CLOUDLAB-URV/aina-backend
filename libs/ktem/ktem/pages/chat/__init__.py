@@ -497,6 +497,7 @@ class ChatPage(BasePage):
                     self.chat_control.conversation_rn,
                     self._conversation_renamed,
                     self._app.user_id,
+                    self.chat_control.selected_agent,
                 ],
                 outputs=[
                     self.chat_control.conversation,
@@ -591,7 +592,10 @@ class ChatPage(BasePage):
         if not KH_DEMO_MODE:
             self.chat_control.btn_new.click(
                 self.chat_control.new_conv,
-                inputs=self._app.user_id,
+                inputs=[
+                    self._app.user_id,
+                    self.chat_control.selected_agent,
+                ],
                 outputs=[
                     self.chat_control.conversation_id,
                     self.chat_control.conversation,
@@ -635,7 +639,11 @@ class ChatPage(BasePage):
             )
             self.chat_control.btn_del_conf.click(
                 self.chat_control.delete_conv,
-                inputs=[self.chat_control.conversation_id, self._app.user_id],
+                inputs=[
+                    self.chat_control.conversation_id,
+                    self._app.user_id,
+                    self.chat_control.selected_agent
+                ],
                 outputs=[
                     self.chat_control.conversation_id,
                     self.chat_control.conversation,
@@ -690,6 +698,7 @@ class ChatPage(BasePage):
                     self.chat_control.conversation_rn,
                     gr.State(value=True),
                     self._app.user_id,
+                    self.chat_control.selected_agent
                 ],
                 outputs=[
                     self.chat_control.conversation,
@@ -698,6 +707,37 @@ class ChatPage(BasePage):
                 ],
                 show_progress="hidden",
             )
+
+        self.chat_control.agent_dropdown.select(
+            self.chat_control.select_agent,
+            inputs=[
+                self._app.user_id,
+                self.chat_control.agent_dropdown,
+            ],
+            outputs=[
+                self.chat_control.selected_agent,
+                self.chat_control.conversation_id,
+                self.chat_control.conversation,
+            ],
+        ).then(
+            self.chat_control.select_conv,
+            inputs=[self.chat_control.conversation, self._app.user_id],
+            outputs=[
+                self.chat_control.conversation_id,
+                self.chat_control.conversation,
+                self.chat_control.conversation_rn,
+                self.chat_panel.chatbot,
+                self.followup_questions,
+                self.info_panel,
+                self.state_plot_panel,
+                self.state_retrieval_history,
+                self.state_plot_history,
+                self.chat_control.cb_is_public,
+                self.state_chat,
+            ]
+            + self._indices_input,
+            show_progress="hidden",
+        )
 
         onConvSelect = (
             self.chat_control.conversation.select(

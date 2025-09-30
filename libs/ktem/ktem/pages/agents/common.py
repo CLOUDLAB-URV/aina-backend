@@ -2,7 +2,7 @@ from ktem.db.engine import engine
 from ktem.db.base_models import Role
 from ktem.db.models import Agent, User
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_
 
 def check_user_permissions_write(user, agent):
     """Check if the user has permission to modify the agent"""
@@ -36,7 +36,7 @@ def can_create_agent(user):
         return False
     return user.role in [Role.ADMIN, Role.AGENT_CREATOR]
 
-def load_agents(user_id):
+def load_agents_created(user_id):
     if not user_id:
         return []
 
@@ -46,17 +46,41 @@ def load_agents(user_id):
             return []
 
         if user.role == Role.ADMIN:
-            agents = session.exec(
-                select(Agent)
-                .order_by(Agent.date_created.desc())
-            ).all()
+            statement = select(Agent)
         elif user.role == Role.AGENT_CREATOR:
-            agents = session.exec(
-                select(Agent)
-                .where(Agent.creators.contains([user.id]))
-                .order_by(Agent.date_created.desc())
-            ).all()
+            statement = select(Agent).where(Agent.creators.contains([user.id]))
         else:
             return []
+
+        statement = statement.order_by(Agent.date_created.desc())
+        agents = session.exec(statement).all()
+
+        return agents
+
+def load_agents_accessible(user_id):
+    if not user_id:
+        return []
+
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.id == user_id)).first()
+        if user is None:
+            return []
+
+        if user.role == Role.ADMIN:
+            statement = select(Agent)
+        elif user.role == Role.AGENT_CREATOR:
+            statement = select(Agent).where(
+                or_(
+                    Agent.users.contains([user.id]),
+                    Agent.creators.contains([user.id]),
+                )
+            )
+        elif user.role == Role.CHAT_USER:
+            statement = select(Agent).where(Agent.users.contains([user.id]))
+        else:
+            return []
+
+        statement = statement.order_by(Agent.date_created.desc())
+        agents = session.exec(statement).all()
 
         return agents

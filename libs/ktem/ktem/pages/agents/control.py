@@ -12,7 +12,7 @@ from .common import (
     check_user_permissions_write,
     check_user_permissions_read,
     can_create_agent,
-    load_agents,
+    load_agents_created,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ class AgentControl(BasePage):
             )
 
     def refresh_agent_list(self, user_id):
-        agents = load_agents(user_id)
+        agents = load_agents_created(user_id)
         selected_agent = agents[0].id if len(agents) > 0 else None
         agents = [(a.name, a.id) for a in agents]
         return gr.update(choices=agents, value=selected_agent), selected_agent
@@ -156,7 +156,7 @@ class AgentControl(BasePage):
             session.commit()
             agent_id = new_agent.id
 
-        agents = load_agents(user_id)
+        agents = load_agents_created(user_id)
         agents = [(agent.name, agent.id) for agent in agents]
         return gr.update(choices=agents, value=agent_id), agent_id, agent_name
 
@@ -182,7 +182,7 @@ class AgentControl(BasePage):
             session.delete(agent)
             session.commit()
 
-        agents = load_agents(user_id)
+        agents = load_agents_created(user_id)
         agents = [(agent.name, agent.id) for agent in agents]
         return gr.update(choices=agents, value=None), None
 

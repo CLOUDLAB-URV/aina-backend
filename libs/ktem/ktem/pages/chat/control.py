@@ -4,13 +4,13 @@ from copy import deepcopy
 
 import gradio as gr
 from ktem.app import BasePage
-from ktem.db.models import Conversation, User, engine
+from ktem.db.models import Conversation, User, Agent, engine
 from sqlmodel import Session, or_, select
 
 import flowsettings
 
 from ...utils.conversation import sync_retrieval_n_message
-from ...pages.agents.common import load_agents
+from ...pages.agents.common import load_agents_accessible
 from .chat_suggestion import ChatSuggestion
 from .common import STATE
 
@@ -211,7 +211,7 @@ class ConversationControl(BasePage):
                 visible=False,
             )
 
-    def load_chat_history(self, user_id):
+    def load_chat_history(self, user_id, agent_id):
         """Reload chat history"""
 
         # In case user are admin. They can also watch the
@@ -245,16 +245,20 @@ class ConversationControl(BasePage):
                             Conversation.is_public,
                         )
                     )
-                    .order_by(
-                        Conversation.is_public.desc(), Conversation.date_created.desc()
-                    )  # type: ignore
                 )
+                if agent_id:
+                    statement = statement.where(Conversation.agent == agent_id)
+                statement = statement.order_by(
+                    Conversation.is_public.desc(), Conversation.date_created.desc()
+                )  # type: ignore
             else:
                 statement = (
                     select(Conversation)
                     .where(Conversation.user == user_id)
-                    .order_by(Conversation.date_created.desc())  # type: ignore
                 )
+                if agent_id:
+                    statement = statement.where(Conversation.agent_id == agent_id)
+                statement = statement.order_by(Conversation.date_created.desc())  # type: ignore
 
             results = session.exec(statement).all()
             for result in results:
@@ -263,7 +267,7 @@ class ConversationControl(BasePage):
         return options
 
     def on_sign_in(self, user_id):
-        agents = load_agents(user_id)
+        agents = load_agents_accessible(user_id)
         selected_agent = agents[0].id if len(agents) > 0 else None
         if not selected_agent:
             gr.Warning("No agents available.")
@@ -272,32 +276,49 @@ class ConversationControl(BasePage):
             choices=agents,
             value=selected_agent,
         )
-        return self.reload_conv(user_id), agent_dropdown, selected_agent
+        return self.reload_conv(user_id, selected_agent), agent_dropdown, selected_agent
 
-    def reload_conv(self, user_id):
-        conv_list = self.load_chat_history(user_id)
+    def select_agent(self, user_id, agent_id):
+        selected_agent = None
+        conversation_id = None
+        with Session(engine) as session:
+            agent = session.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
+            if not agent:
+                gr.Warning("Selected agent not found.")
+                return selected_agent, conversation_id, gr.update(choices=[], value=conversation_id)
+            selected_agent = agent.id
+
+        conv_list = self.load_chat_history(user_id, agent_id)
+        return selected_agent, conversation_id, gr.update(choices=conv_list, value=conversation_id)
+
+    def reload_conv(self, user_id, agent_id):
+        conv_list = self.load_chat_history(user_id, agent_id)
         if conv_list:
             return gr.update(value=None, choices=conv_list)
         else:
             return gr.update(value=None, choices=[])
 
-    def new_conv(self, user_id):
+    def new_conv(self, user_id, agent_id):
         """Create new chat"""
         if user_id is None:
             gr.Warning("Please sign in first (Settings → User Settings)")
             return None, gr.update()
         with Session(engine) as session:
             new_conv = Conversation(user=user_id)
+            if agent_id:
+                agent = session.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
+                if agent:
+                    new_conv.agent = agent
             session.add(new_conv)
             session.commit()
 
             id_ = new_conv.id
 
-        history = self.load_chat_history(user_id)
+        history = self.load_chat_history(user_id, agent_id)
 
         return id_, gr.update(value=id_, choices=history)
 
-    def delete_conv(self, conversation_id, user_id):
+    def delete_conv(self, conversation_id, user_id, agent_id):
         """Delete the selected conversation"""
         if not conversation_id:
             gr.Warning("No conversation selected.")
@@ -314,7 +335,7 @@ class ConversationControl(BasePage):
             session.delete(result)
             session.commit()
 
-        history = self.load_chat_history(user_id)
+        history = self.load_chat_history(user_id, agent_id)
         if history:
             id_ = history[0][1]
             return id_, gr.update(value=id_, choices=history)
@@ -401,7 +422,7 @@ class ConversationControl(BasePage):
             *indices,
         )
 
-    def rename_conv(self, conversation_id, new_name, is_renamed, user_id):
+    def rename_conv(self, conversation_id, new_name, is_renamed, user_id, agent_id):
         """Rename the conversation"""
         if not is_renamed or KH_DEMO_MODE or user_id is None or not conversation_id:
             return (
@@ -426,7 +447,7 @@ class ConversationControl(BasePage):
             session.add(result)
             session.commit()
 
-        history = self.load_chat_history(user_id)
+        history = self.load_chat_history(user_id, agent_id)
         gr.Info("Conversation renamed.")
         return (
             gr.update(choices=history),
@@ -491,6 +512,9 @@ class ConversationControl(BasePage):
         """Reload the conversation once the app is created"""
         self._app.app.load(
             self.reload_conv,
-            inputs=[self._app.user_id],
+            inputs=[
+                self._app.user_id,
+                self.selected_agent
+            ],
             outputs=[self.conversation],
         )
