@@ -1,7 +1,12 @@
 import gradio as gr
 from ktem.app import BasePage
+from ktem.db.engine import engine
+from ktem.db.models import Agent, User
+from ktem.db.base_models import Role
+from sqlmodel import Session, select
 
 from .users import AgentUsers
+from .control import AgentControl
 
 class AgentsTab(BasePage):
     def __init__(self, app):
@@ -11,10 +16,7 @@ class AgentsTab(BasePage):
 
     def on_building_ui(self):
         with gr.Row():
-            with gr.Column():
-                self.agent_dropdown = gr.Dropdown(
-                    label="Select Agent",
-                    choices=[],
-                    interactive=True,
-                )
-                self.agent_users = AgentUsers(self)
+            with gr.Column(scale=1):
+                self.agent_control = AgentControl(self._app, self.selected_agent)
+                self.agent_users = AgentUsers(self._app, self.selected_agent)
+            # with gr.Column(scale=3):
