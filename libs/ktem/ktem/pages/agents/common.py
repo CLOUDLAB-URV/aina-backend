@@ -13,7 +13,7 @@ def check_user_permissions_write(user, agent):
     if user.role == Role.ADMIN:
         return True
     if user.role == Role.AGENT_CREATOR:
-        if agent.creators.contains(user.id):
+        if user in agent.creators:
             return True
     return False
 
@@ -26,7 +26,7 @@ def check_user_permissions_read(user, agent):
     if user.role == Role.ADMIN:
         return True
     if user.role == Role.AGENT_CREATOR:
-        if agent.creators.contains(user.id):
+        if user in agent.creators:
             return True
     return False
 
@@ -71,8 +71,8 @@ def load_agents_accessible(user_id):
         elif user.role == Role.AGENT_CREATOR:
             statement = select(Agent).where(
                 or_(
-                    Agent.users.contains([user.id]),
-                    Agent.creators.contains([user.id]),
+                    Agent.users.contains(user),
+                    Agent.creators.contains(user),
                 )
             )
         elif user.role == Role.CHAT_USER:
