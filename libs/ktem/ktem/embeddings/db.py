@@ -29,7 +29,6 @@ _base_llm: Type[BaseEmbeddingTable] = (
 
 class EmbeddingTable(_base_llm, table=True):  # type: ignore
     __tablename__ = "embedding"
-    agents: list["Agent"] = Relationship(back_populates="embedding")
 
 
 if not getattr(flowsettings, "KH_ENABLE_ALEMBIC", False):

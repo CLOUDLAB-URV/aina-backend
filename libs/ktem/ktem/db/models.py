@@ -86,9 +86,6 @@ class Agent(_base_agent, table=True):  # type: ignore
     model_name: Optional[str] = Field(default=None, foreign_key="llm_table.name")
     model: Optional["LLMTable"] = Relationship(back_populates="agents")
 
-    embedding_name: Optional[str] = Field(default=None, foreign_key="embedding.name")
-    embedding: Optional["EmbeddingTable"] = Relationship(back_populates="agents")
-
 
 class Settings(_base_settings, table=True):  # type: ignore
     """Record of settings"""

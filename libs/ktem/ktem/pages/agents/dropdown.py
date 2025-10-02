@@ -3,7 +3,6 @@ from ktem.app import BasePage
 from ktem.db.engine import engine
 from ktem.db.models import Agent, User
 from ktem.llms.manager import llms
-from ktem.embeddings.manager import embedding_models_manager
 from sqlmodel import Session, select
 
 from .common import check_user_permissions_write
@@ -23,11 +22,6 @@ class AgentSettings(BasePage):
         )
         self.model = gr.Dropdown(
             label="Model",
-            choices=[],
-            interactive=True,
-        )
-        self.embedding = gr.Dropdown(
-            label="Embedding",
             choices=[],
             interactive=True,
         )
@@ -85,16 +79,6 @@ class AgentSettings(BasePage):
             session.add(agent)
             session.commit()
 
-    def update_embedding(self, user_id, agent_id, embedding_name):
-        with Session(engine) as session:
-            agent, user = self._validate_agent_and_user(session, user_id, agent_id, "modify")
-            if not agent or not user:
-                return
-
-            agent.embedding_name = embedding_name
-            session.add(agent)
-            session.commit()
-
     def on_agent_change(self, user_id, agent_id):
         empty_response = (
             gr.update(choices=[], value=None),
@@ -115,8 +99,6 @@ class AgentSettings(BasePage):
 
             model_value = agent.model.name if agent.model else None
 
-            embedding_value = agent.embedding.name if agent.embedding else None
-
             return (
                 gr.update(
                     choices=all_indexes,
@@ -126,10 +108,6 @@ class AgentSettings(BasePage):
                     choices=list(llms.options().keys()),
                     value=model_value
                 ),
-                gr.update(
-                    choices=list(embedding_models_manager.options().keys()),
-                    value=embedding_value
-                )
             )
 
     def on_register_events(self):
@@ -142,7 +120,6 @@ class AgentSettings(BasePage):
             outputs=[
                 self.index,
                 self.model,
-                self.embedding
             ],
             show_progress=False,
         )
@@ -160,13 +137,5 @@ class AgentSettings(BasePage):
                 self._app.user_id,
                 self.selected_agent,
                 self.model,
-            ],
-        )
-        self.embedding.select(
-            fn=self.update_embedding,
-            inputs=[
-                self._app.user_id,
-                self.selected_agent,
-                self.embedding,
             ],
         )
