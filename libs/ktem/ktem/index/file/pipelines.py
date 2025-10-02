@@ -247,7 +247,7 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
             },
             "retrieval_mode": {
                 "name": "Retrieval mode",
-                "value": "hybrid",
+                "value": "vector",
                 "choices": ["vector", "text", "hybrid"],
                 "component": "dropdown",
             },
@@ -265,7 +265,7 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
             },
             "use_reranking": {
                 "name": "Use reranking",
-                "value": True,
+                "value": False,
                 "choices": [True, False],
                 "component": "checkbox",
             },

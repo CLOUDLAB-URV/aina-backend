@@ -411,7 +411,7 @@ class FileIndex(BaseIndex):
             },
             "private": {
                 "name": "Make private",
-                "value": False,
+                "value": True,
                 "component": "radio",
                 "choices": [("Yes", True), ("No", False)],
                 "info": "If private, files will not be accessible across users.",
