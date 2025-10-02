@@ -214,6 +214,8 @@ class IndexManagement(BasePage):
             self.list_indices,
             inputs=[],
             outputs=[self.index_list],
+        ).success(
+            update_current_module_atime
         )
         self.btn_close.click(
             lambda: -1,
