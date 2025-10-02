@@ -1370,11 +1370,7 @@ class ChatPage(BasePage):
             web_search = WebSearch()
             retrievers.append(web_search)
         else:
-            current_agent_indices = getattr(
-                self,
-                '_current_agent_indices',
-                self._app.index_manager.indices
-            )
+            current_agent_indices = self._current_agent_indices or self._app.index_manager.indices
 
             for index in current_agent_indices:
                 index_selected = []
