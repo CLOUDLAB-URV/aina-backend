@@ -48,7 +48,7 @@ def load_agents_created(user_id):
         if user.role == Role.ADMIN:
             statement = select(Agent)
         elif user.role == Role.AGENT_CREATOR:
-            statement = select(Agent).where(Agent.creators.contains([user.id]))
+            statement = select(Agent).where(Agent.creators.contains(user))
         else:
             return []
 
@@ -76,7 +76,7 @@ def load_agents_accessible(user_id):
                 )
             )
         elif user.role == Role.CHAT_USER:
-            statement = select(Agent).where(Agent.users.contains([user.id]))
+            statement = select(Agent).where(Agent.users.contains(user))
         else:
             return []
 
