@@ -74,7 +74,7 @@ def load_agents_accessible(user_id):
                     Agent.users.contains(user),
                     Agent.creators.contains(user),
                 )
-            )
+            ).distinct()
         elif user.role == Role.CHAT_USER:
             statement = select(Agent).where(Agent.users.contains(user))
         else:
