@@ -9,6 +9,9 @@ from ktem.pages.resources import ResourcesTab
 from ktem.pages.settings import SettingsPage
 from ktem.pages.setup import SetupPage
 from theflow.settings import settings as flowsettings
+from ktem.db.engine import engine
+from ktem.db.models import User, Agent
+from sqlmodel import Session, select, or_
 
 KH_DEMO_MODE = getattr(flowsettings, "KH_DEMO_MODE", False)
 KH_SSO_ENABLED = getattr(flowsettings, "KH_SSO_ENABLED", False)
@@ -41,6 +44,55 @@ class App(BaseApp):
         - Register events
     """
 
+    def get_user_accessible_indices(self, user_id):
+        """Get indices that a user has access to based on their role and agent permissions"""
+        if not user_id:
+            return []
+
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.id == user_id)).first()
+            if not user:
+                return []
+
+            # Admin can see all indices
+            if user.role == Role.ADMIN:
+                return self.index_manager.indices
+
+            # Chat users cannot see any indices
+            if user.role == Role.CHAT_USER:
+                return []
+
+            # Agent creators can see indices from agents they have access to
+            if user.role == Role.AGENT_CREATOR:
+                # Get agents the user can access (created by them or they have access to)
+                agents = session.exec(
+                    select(Agent).where(
+                        or_(
+                            Agent.creators.contains(user),
+                            Agent.users.contains(user),
+                        )
+                    ).distinct()
+                ).all()
+
+                # Get unique index IDs from these agents
+                accessible_index_ids = set()
+                for agent in agents:
+                    if agent.index_id:
+                        accessible_index_ids.add(agent.index_id)
+
+                # Return indices that match these IDs
+                return [idx for idx in self.index_manager.indices if idx.id in accessible_index_ids]
+
+            return []
+
+    def declare_index_events(self):
+        """Declare events for all indices to ensure they're available for subscription"""
+        for index in self.index_manager.indices:
+            # Declare the FileIndex changed event for each index
+            event_name = f"onFileIndex{index.id}Changed"
+            if event_name not in self._events:
+                self.declare_event(event_name)
+
     def ui(self):
         """Render the UI"""
         self._tabs = {}
@@ -71,36 +123,53 @@ class App(BaseApp):
             ) as self._tabs["agents-tab"]:
                 self.agents_page = AgentsTab(self)
 
-            if len(self.index_manager.indices) == 1:
-                for index in self.index_manager.indices:
+            # Dynamic index rendering with security - only render authorized indices
+            @gr.render(inputs=[self.user_id], triggers=[self.user_id.change])
+            def render_user_indices(user_id):
+                # Don't show indices tab for demo mode
+                if KH_DEMO_MODE:
+                    return
+                
+                # Don't show indices if user management is enabled but no user is logged in
+                if self.f_user_management and not user_id:
+                    return
+                
+                accessible_indices = self.get_user_accessible_indices(user_id)
+                
+                # Don't show if user has no access to any indices
+                if not accessible_indices:
+                    return
+
+                # Render index tabs dynamically based on user access
+                # Render single index as direct tab
+                if len(accessible_indices) == 1:
+                    index = accessible_indices[0]
                     with gr.Tab(
                         f"{index.name}",
                         elem_id="indices-tab",
                         elem_classes=[
                             "fill-main-area-height",
-                            "scrollable",
+                            "scrollable", 
                             "indices-tab",
                         ],
                         id="indices-tab",
-                        visible=not self.f_user_management and not KH_DEMO_MODE,
-                    ) as self._tabs[f"{index.id}-tab"]:
+                    ):
                         page = index.get_index_page_ui()
-                        setattr(self, f"_index_{index.id}", page)
-            elif len(self.index_manager.indices) > 1:
-                with gr.Tab(
-                    "Files",
-                    elem_id="indices-tab",
-                    elem_classes=["fill-main-area-height", "scrollable", "indices-tab"],
-                    id="indices-tab",
-                    visible=not self.f_user_management and not KH_DEMO_MODE,
-                ) as self._tabs["indices-tab"]:
-                    for index in self.index_manager.indices:
-                        with gr.Tab(
-                            index.name,
-                            elem_id=f"{index.id}-tab",
-                        ) as self._tabs[f"{index.id}-tab"]:
-                            page = index.get_index_page_ui()
-                            setattr(self, f"_index_{index.id}", page)
+                        
+                # Render multiple indices under Files tab
+                elif len(accessible_indices) > 1:
+                    with gr.Tab(
+                        "Files",
+                        elem_id="indices-tab",
+                        elem_classes=["fill-main-area-height", "scrollable", "indices-tab"],
+                        id="indices-tab",
+                    ):
+                        for index in accessible_indices:
+                            with gr.Tab(
+                                index.name,
+                                elem_id=f"{index.id}-tab",
+                            ):
+                                page = index.get_index_page_ui()
 
             if not KH_DEMO_MODE:
                 if not KH_SSO_ENABLED:
@@ -135,11 +204,15 @@ class App(BaseApp):
             with gr.Column(visible=False) as self.setup_page_wrapper:
                 self.setup_page = SetupPage(self)
 
+    def declare_public_events(self):
+        """Declare an event for the app including index events"""
+        # Call parent implementation first
+        super().declare_public_events()
+        # Declare all index events
+        self.declare_index_events()
+
     def on_subscribe_public_events(self):
         if self.f_user_management:
-            from ktem.db.engine import engine
-            from ktem.db.models import User
-            from sqlmodel import Session, select
 
             def toggle_login_visibility(user_id):
                 if not user_id:
