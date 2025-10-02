@@ -3,6 +3,7 @@ SUPPORTED_LANGUAGE_MAP = {
     "ja": "Japanese",
     "vi": "Vietnamese",
     "es": "Spanish",
+    "ca": "Catalan",
     "fr": "French",
     "de": "German",
     "zh": "Chinese",
