@@ -8,7 +8,7 @@ import gradio as gr
 from decouple import config
 from ktem.app import BasePage
 from ktem.components import reasonings
-from ktem.db.models import Conversation, engine
+from ktem.db.models import Conversation, Agent, engine
 from ktem.index.file.ui import File
 from ktem.reasoning.prompt_optimization.mindmap import MINDMAP_HTML_EXPORT_TEMPLATE
 from ktem.reasoning.prompt_optimization.suggest_conversation_name import (
@@ -201,8 +201,8 @@ class ChatPage(BasePage):
     def __init__(self, app):
         self._app = app
         self._indices_input = []
-
-        self.on_building_ui()
+        self._current_agent_indices = []
+        self._index_mode_radios = []
 
         self._preview_links = gr.State(value=None)
         self._reasoning_type = gr.State(value=None)
@@ -214,6 +214,8 @@ class ChatPage(BasePage):
         self._command_state = gr.State(value=None)
         self._user_api_key = gr.Text(value="", visible=False)
 
+        self.on_building_ui()
+
     def on_building_ui(self):
         with gr.Row():
             self.state_chat = gr.State(STATE)
@@ -224,6 +226,8 @@ class ChatPage(BasePage):
 
             with gr.Column(scale=1, elem_id="conv-settings-panel") as self.conv_column:
                 self.chat_control = ConversationControl(self._app)
+
+                self._index_accordions = []  # List of accordions in order
 
                 for index_id, index in enumerate(self._app.index_manager.indices):
                     index.selector = None
@@ -241,11 +245,20 @@ class ChatPage(BasePage):
 
                     with gr.Accordion(
                         label=index_name,
-                        open=is_first_index,
+                        open=True,
                         elem_id=f"index-{index_id}",
-                    ):
+                        visible=False,
+                    ) as accordion:
                         index_ui.render()
                         gr_index = index_ui.as_gradio_component()
+
+                        self._index_accordions.append(accordion)
+
+                        # Store radio button for mode control (Search All/Search In Files)
+                        if hasattr(index_ui, 'mode'):
+                            self._index_mode_radios.append(index_ui.mode)
+                        else:
+                            self._index_mode_radios.append(None)
 
                         # get the file selector choices for the first index
                         if index_id == 0:
@@ -399,6 +412,61 @@ class ChatPage(BasePage):
         self.followup_questions = self.chat_suggestion.examples
         self.followup_questions_ui = self.chat_suggestion.accordion
 
+    def update_indices_visibility(self, selected_agent_id):
+        """Update visibility of index accordions and set radio buttons based on selected agent"""
+
+        agent_indices = self.get_indices_for_agent(selected_agent_id)
+        agent_index_ids = {index.id for index in agent_indices}
+
+        self._current_agent_indices = agent_indices
+
+        # Return gr.update() for each accordion to control visibility
+        accordion_updates = []
+        radio_updates = []
+
+        for i, index in enumerate(self._app.index_manager.indices):
+            is_visible = index.id in agent_index_ids
+            # Update accordion visibility
+            accordion_updates.append(gr.update(visible=is_visible))
+
+            # Update radio button to "all" (Search All) if visible and radio exists
+            if i < len(self._index_mode_radios) and self._index_mode_radios[i] is not None:
+                if is_visible:
+                    radio_updates.append(gr.update(value="all"))
+                else:
+                    radio_updates.append(gr.update())  # No change if not visible
+            else:
+                radio_updates.append(gr.update())  # No radio component available
+
+        return accordion_updates + radio_updates
+
+    def get_indices_for_agent(self, agent_id):
+        """Get indices available for a specific agent.
+
+        Args:
+            agent_id: The ID of the selected agent (None for initial load)
+
+        Returns:
+            List of indices available for this agent
+        """
+        all_indices = self._app.index_manager.indices
+
+        if not agent_id:
+            # For initial load or no agent selected, show all indices
+            return all_indices
+
+        with Session(engine) as sess:
+            agent = sess.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
+            if not agent:
+                return all_indices
+
+            # Example logic: filter indices based on agent's configured index_id
+            if agent.index_id:
+                return [index for index in all_indices if index.id == agent.index_id]
+            else:
+                # If no specific index configured, return all indices
+                return all_indices
+
     def _json_to_plot(self, json_dict: dict | None):
         if json_dict:
             plot = from_json(json_dict)
@@ -443,11 +511,11 @@ class ChatPage(BasePage):
                     self.chat_control.conversation_id,
                     self.chat_control.conversation,
                     self.chat_control.conversation_rn,
-                    # file selector from the first index
-                    self._indices_input[0],
-                    self._indices_input[1],
-                    self._command_state,
-                ],
+                    # file selector from the first index (will be dynamically updated)
+                ] + ([self._indices_input[0], self._indices_input[1]]
+                     if len(self._indices_input) >= 2
+                     else [gr.State(value=None), gr.State(value=None)])
+                + [self._command_state],
                 concurrency_limit=20,
                 show_progress="hidden",
             )
@@ -710,13 +778,17 @@ class ChatPage(BasePage):
             )
 
         self.chat_control.agent_dropdown.select(
+            lambda a: a,
+            inputs=[self.chat_control.agent_dropdown],
+            outputs=[self.chat_control.selected_agent],
+        )
+        self.chat_control.selected_agent.change(
             self.chat_control.select_agent,
             inputs=[
                 self._app.user_id,
-                self.chat_control.agent_dropdown,
+                self.chat_control.selected_agent,
             ],
             outputs=[
-                self.chat_control.selected_agent,
                 self.chat_control.conversation_id,
                 self.chat_control.conversation,
                 self.model_type,
@@ -738,6 +810,11 @@ class ChatPage(BasePage):
                 self.state_chat,
             ]
             + self._indices_input,
+            show_progress="hidden",
+        ).then(
+            self.update_indices_visibility,
+            inputs=[self.chat_control.selected_agent],
+            outputs=self._index_accordions + self._index_mode_radios,
             show_progress="hidden",
         )
 
@@ -772,6 +849,12 @@ class ChatPage(BasePage):
                     self.chat_control._new_delete,
                     self.chat_control._delete_confirm,
                 ],
+            )
+            .then(
+                self.update_indices_visibility,
+                inputs=[self.chat_control.selected_agent],
+                outputs=self._index_accordions + self._index_mode_radios,
+                show_progress="hidden",
             )
         )
 
@@ -1067,8 +1150,8 @@ class ChatPage(BasePage):
                     "fn": self.chat_control.on_sign_in,
                     "inputs": [self._app.user_id],
                     "outputs": [
-                        self.chat_control.conversation,
                         self.chat_control.agent_dropdown,
+                        self.chat_control.selected_agent,
                     ],
                     "show_progress": "hidden",
                 },
@@ -1287,7 +1370,13 @@ class ChatPage(BasePage):
             web_search = WebSearch()
             retrievers.append(web_search)
         else:
-            for index in self._app.index_manager.indices:
+            current_agent_indices = getattr(
+                self,
+                '_current_agent_indices',
+                self._app.index_manager.indices
+            )
+
+            for index in current_agent_indices:
                 index_selected = []
                 if isinstance(index.selector, int):
                     index_selected = selecteds[index.selector]
