@@ -31,7 +31,7 @@ footer {
 .header-bar {
   background-color: transparent;
   margin: 0px 0px 20px;
-  overflow-x: scroll;
+  /* overflow-x: scroll; */
   display: block !important;
   text-wrap: nowrap;
   border: none;

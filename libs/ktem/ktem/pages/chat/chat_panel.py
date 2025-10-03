@@ -30,7 +30,8 @@ class ChatPanel(BasePage):
             show_label=False,
             elem_id="main-chat-bot",
             show_copy_button=True,
-            likeable=True,
+            type="messages",
+            # likeable=True,
             bubble_full_width=False,
         )
         with gr.Row():
