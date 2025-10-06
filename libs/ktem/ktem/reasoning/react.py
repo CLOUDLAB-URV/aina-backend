@@ -331,6 +331,7 @@ class ReactAgentPipeline(BaseReasoning):
             "qa_prompt": {
                 "name": "QA Prompt",
                 "value": DEFAULT_QA_PROMPT,
+                "kwargs": {"lines": 10},
             },
         }
 

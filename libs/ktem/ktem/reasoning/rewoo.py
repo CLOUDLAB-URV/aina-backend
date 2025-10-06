@@ -481,10 +481,12 @@ class RewooAgentPipeline(BaseReasoning):
             "planner_prompt": {
                 "name": "Planner Prompt",
                 "value": DEFAULT_PLANNER_PROMPT,
+                "kwargs": {"lines": 10},
             },
             "solver_prompt": {
                 "name": "Solver Prompt",
                 "value": DEFAULT_SOLVER_PROMPT,
+                "kwargs": {"lines": 10},
             },
         }
 

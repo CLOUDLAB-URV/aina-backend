@@ -453,6 +453,7 @@ class FullQAPipeline(BaseReasoning):
             "qa_prompt": {
                 "name": "QA Prompt (contains {context}, {question}, {lang})",
                 "value": DEFAULT_QA_TEXT_PROMPT,
+                "kwargs": {"lines": 10},
             },
             "n_last_interactions": {
                 "name": "Number of interactions to include",
