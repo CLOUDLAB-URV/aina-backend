@@ -8,7 +8,7 @@ import gradio as gr
 from decouple import config
 from ktem.app import BasePage
 from ktem.components import reasonings
-from ktem.db.models import Conversation, Agent, engine
+from ktem.db.models import Agent, Conversation, engine
 from ktem.index.file.ui import File
 from ktem.reasoning.prompt_optimization.mindmap import MINDMAP_HTML_EXPORT_TEMPLATE
 from ktem.reasoning.prompt_optimization.suggest_conversation_name import (
@@ -254,8 +254,8 @@ class ChatPage(BasePage):
 
                         self._index_accordions.append(accordion)
 
-                        # Store radio button for mode control (Search All/Search In Files)
-                        if hasattr(index_ui, 'mode'):
+                        # Store radio button for mode control
+                        if hasattr(index_ui, "mode"):
                             self._index_mode_radios.append(index_ui.mode)
                         else:
                             self._index_mode_radios.append(None)
@@ -413,7 +413,10 @@ class ChatPage(BasePage):
         self.followup_questions_ui = self.chat_suggestion.accordion
 
     def update_indices_visibility(self, selected_agent_id):
-        """Update visibility of index accordions and set radio buttons based on selected agent"""
+        """
+        Update visibility of index accordions and set radio buttons
+        based on selected agent
+        """
 
         agent_indices = self.get_indices_for_agent(selected_agent_id)
         agent_index_ids = {index.id for index in agent_indices}
@@ -430,7 +433,10 @@ class ChatPage(BasePage):
             accordion_updates.append(gr.update(visible=is_visible))
 
             # Update radio button to "all" (Search All) if visible and radio exists
-            if i < len(self._index_mode_radios) and self._index_mode_radios[i] is not None:
+            if (
+                i < len(self._index_mode_radios)
+                and self._index_mode_radios[i] is not None
+            ):
                 if is_visible:
                     radio_updates.append(gr.update(value="all"))
                 else:
@@ -512,9 +518,12 @@ class ChatPage(BasePage):
                     self.chat_control.conversation,
                     self.chat_control.conversation_rn,
                     # file selector from the first index (will be dynamically updated)
-                ] + ([self._indices_input[0], self._indices_input[1]]
-                     if len(self._indices_input) >= 2
-                     else [gr.State(value=None), gr.State(value=None)])
+                ]
+                + (
+                    [self._indices_input[0], self._indices_input[1]]
+                    if len(self._indices_input) >= 2
+                    else [gr.State(value=None), gr.State(value=None)]
+                )
                 + [self._command_state],
                 concurrency_limit=20,
                 show_progress="hidden",
@@ -711,7 +720,7 @@ class ChatPage(BasePage):
                 inputs=[
                     self.chat_control.conversation_id,
                     self._app.user_id,
-                    self.chat_control.selected_agent
+                    self.chat_control.selected_agent,
                 ],
                 outputs=[
                     self.chat_control.conversation_id,
@@ -767,7 +776,7 @@ class ChatPage(BasePage):
                     self.chat_control.conversation_rn,
                     gr.State(value=True),
                     self._app.user_id,
-                    self.chat_control.selected_agent
+                    self.chat_control.selected_agent,
                 ],
                 outputs=[
                     self.chat_control.conversation,
@@ -1370,7 +1379,9 @@ class ChatPage(BasePage):
             web_search = WebSearch()
             retrievers.append(web_search)
         else:
-            current_agent_indices = self._current_agent_indices or self._app.index_manager.indices
+            current_agent_indices = (
+                self._current_agent_indices or self._app.index_manager.indices
+            )
 
             for index in current_agent_indices:
                 index_selected = []

@@ -210,11 +210,7 @@ class IndexManagement(BasePage):
                 self.edit_spec,
             ],
             show_progress="hidden",
-        ).then(
-            self.list_indices,
-            inputs=[],
-            outputs=[self.index_list],
-        ).success(
+        ).then(self.list_indices, inputs=[], outputs=[self.index_list],).success(
             update_current_module_atime
         )
         self.btn_close.click(

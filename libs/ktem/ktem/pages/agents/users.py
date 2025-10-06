@@ -2,10 +2,10 @@ import gradio as gr
 from ktem.app import BasePage
 from ktem.db.engine import engine
 from ktem.db.models import Agent, User
-from ktem.db.base_models import Role
 from sqlmodel import Session, select
 
 from .common import check_user_permissions_write
+
 
 class AgentUsers(BasePage):
     def __init__(self, app, selected_agent):
@@ -47,20 +47,14 @@ class AgentUsers(BasePage):
                 gr.Warning("You do not have permission to view this agent's users.")
                 return [], []
 
-            all_users = session.exec(select(User)).all()
-            all_users = [(u.username, u.id) for u in all_users]
+            res = session.exec(select(User)).all()
+            all_users = [(u.username, u.id) for u in res]
             creators = [u.id for u in agent.creators]
             users = [u.id for u in agent.users]
 
             return (
-                gr.update(
-                    choices=all_users,
-                    value=creators
-                ),
-                gr.update(
-                    choices=all_users,
-                    value=users
-                )
+                gr.update(choices=all_users, value=creators),
+                gr.update(choices=all_users, value=users),
             )
 
     def update_creators(self, user_id, agent_id, new_creators):
@@ -132,27 +126,16 @@ class AgentUsers(BasePage):
                 self._app.user_id,
                 self.selected_agent,
             ],
-            outputs=[
-                self.creators,
-                self.users
-            ],
+            outputs=[self.creators, self.users],
             show_progress="hidden",
         )
         self.creators.select(
             fn=self.update_creators,
-            inputs=[
-                self._app.user_id,
-                self.selected_agent,
-                self.creators
-            ],
+            inputs=[self._app.user_id, self.selected_agent, self.creators],
             show_progress="hidden",
         )
         self.users.select(
             fn=self.update_users,
-            inputs=[
-                self._app.user_id,
-                self.selected_agent,
-                self.users
-            ],
+            inputs=[self._app.user_id, self.selected_agent, self.users],
             show_progress="hidden",
         )

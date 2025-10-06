@@ -1,11 +1,10 @@
-from typing import Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 from ktem.db.engine import engine
 from sqlalchemy import JSON, Column
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import Field, Relationship, SQLModel
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import import_dotted_string
-
 
 if TYPE_CHECKING:
     from ktem.db.models import Agent

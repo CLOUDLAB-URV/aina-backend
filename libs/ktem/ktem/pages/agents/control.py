@@ -5,13 +5,12 @@ import gradio as gr
 from ktem.app import BasePage
 from ktem.db.engine import engine
 from ktem.db.models import Agent, User
-from ktem.db.base_models import Role
 from sqlmodel import Session, select
 
 from .common import (
-    check_user_permissions_write,
-    check_user_permissions_read,
     can_create_agent,
+    check_user_permissions_read,
+    check_user_permissions_write,
     load_agents_created,
 )
 
@@ -216,7 +215,7 @@ class AgentControl(BasePage):
             session.commit()
             agent_id = agent.id
 
-        agents = self.load_agents(user_id)
+        agents = load_agents_created(user_id)
         agents = [(agent.name, agent.id) for agent in agents]
         return gr.update(choices=agents, value=agent_id), gr.update(visible=False)
 
@@ -330,4 +329,3 @@ class AgentControl(BasePage):
                 "show_progress": "hidden",
             },
         )
-    

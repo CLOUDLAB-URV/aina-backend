@@ -4,13 +4,13 @@ from copy import deepcopy
 
 import gradio as gr
 from ktem.app import BasePage
-from ktem.db.models import Conversation, User, Agent, engine
+from ktem.db.models import Agent, Conversation, User, engine
 from sqlmodel import Session, or_, select
 
 import flowsettings
 
-from ...utils.conversation import sync_retrieval_n_message
 from ...pages.agents.common import load_agents_accessible
+from ...utils.conversation import sync_retrieval_n_message
 from .chat_suggestion import ChatSuggestion
 from .common import STATE
 
@@ -237,28 +237,22 @@ class ConversationControl(BasePage):
             # - can_see: can see their conversations & public files
             # - can_not_see: only see their conversations
             if can_see_public:
-                statement = (
-                    select(Conversation)
-                    .where(
-                        or_(
-                            Conversation.user == user_id,
-                            Conversation.is_public,
-                        )
+                statement = select(Conversation).where(
+                    or_(
+                        Conversation.user == user_id,
+                        Conversation.is_public,
                     )
                 )
                 if agent_id:
                     statement = statement.where(Conversation.agent_id == agent_id)
                 statement = statement.order_by(
                     Conversation.is_public.desc(), Conversation.date_created.desc()
-                )  # type: ignore
-            else:
-                statement = (
-                    select(Conversation)
-                    .where(Conversation.user == user_id)
                 )
+            else:
+                statement = select(Conversation).where(Conversation.user == user_id)
                 if agent_id:
                     statement = statement.where(Conversation.agent_id == agent_id)
-                statement = statement.order_by(Conversation.date_created.desc())  # type: ignore
+                statement = statement.order_by(Conversation.date_created.desc())
 
             results = session.exec(statement).all()
             for result in results:
@@ -279,7 +273,9 @@ class ConversationControl(BasePage):
     def select_agent(self, user_id, agent_id):
         conversation_id = None
         with Session(engine) as session:
-            agent = session.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
+            agent = session.exec(
+                select(Agent).where(Agent.id == agent_id)
+            ).one_or_none()
             if not agent:
                 gr.Warning("Selected agent not found.")
                 return (
@@ -313,7 +309,9 @@ class ConversationControl(BasePage):
             return None, gr.update()
         with Session(engine) as session:
             new_conv = Conversation(user=user_id)
-            agent = session.exec(select(Agent).where(Agent.id == agent_id)).one_or_none()
+            agent = session.exec(
+                select(Agent).where(Agent.id == agent_id)
+            ).one_or_none()
             if not agent:
                 gr.Warning("Selected agent not found.")
                 return None, gr.update()
@@ -521,9 +519,6 @@ class ConversationControl(BasePage):
         """Reload the conversation once the app is created"""
         self._app.app.load(
             self.reload_conv,
-            inputs=[
-                self._app.user_id,
-                self.selected_agent
-            ],
+            inputs=[self._app.user_id, self.selected_agent],
             outputs=[self.conversation],
         )
