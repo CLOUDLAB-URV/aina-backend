@@ -44,14 +44,18 @@ class LLMManager:
             items = session.execute(stmt)
 
             for (item,) in items:
-                self._models[item.name] = deserialize(item.spec, safe=False)
-                self._info[item.name] = {
-                    "name": item.name,
-                    "spec": item.spec,
-                    "default": item.default,
-                }
-                if item.default:
-                    self._default = item.name
+                try:
+                    self._models[item.name] = deserialize(item.spec, safe=False)
+                    self._info[item.name] = {
+                        "name": item.name,
+                        "spec": item.spec,
+                        "default": item.default,
+                    }
+                    if item.default:
+                        self._default = item.name
+                except Exception as e:
+                    print(f"Failed to load model {item.name}: {e}")
+                    continue
 
     def load_vendors(self):
         from kotaemon.llms import (
