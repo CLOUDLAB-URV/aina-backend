@@ -1,48 +1,18 @@
-import logging
-import threading
-from textwrap import dedent
-from typing import Generator, Optional
-# from mcp.client.streamable_http import streamablehttp_client
-# from mcp.client.session import ClientSession
-from decouple import config
-from ktem.embeddings.manager import embedding_models_manager as embeddings
-from ktem.llms.manager import llms
-from ktem.reasoning.prompt_optimization import (
-    DecomposeQuestionPipeline,
-    RewriteQuestionPipeline,
-)
-import asyncio
-from ktem.utils.render import Render
-from ktem.utils.visualize_cited import CreateCitationVizPipeline
-from plotly.io import to_json
-
-from kotaemon.base import (
-    AIMessage,
-    BaseComponent,
-    Document,
-    HumanMessage,
-    Node,
-    RetrievedDocument,
-    SystemMessage,
-)
-from kotaemon.indices.qa.citation_qa import (
-    CONTEXT_RELEVANT_WARNING_SCORE,
-    DEFAULT_QA_TEXT_PROMPT,
-    AnswerWithContextPipeline,
-)
-from kotaemon.indices.qa.citation_qa_inline import AnswerWithInlineCitation
-from kotaemon.indices.qa.format_context import PrepareEvidencePipeline
-from kotaemon.indices.qa.utils import replace_think_tag_with_details
-from kotaemon.llms import ChatLLM
-
-from ..utils import SUPPORTED_LANGUAGE_MAP
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.prebuilt import create_react_agent
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import AIMessage
+from kotaemon.base import Document
 from .base import BaseReasoning
+from typing import Optional
+import logging
+import asyncio
+
 
 logger = logging.getLogger(__name__)
 
-class MCPPipeline(BaseReasoning):
-    """Question answering pipeline. Handle from question to answer"""
 
+class MCPPipeline(BaseReasoning):
     """The reasoning pipeline that handles each of the user chat messages
 
     This reasoning pipeline has access to:
@@ -54,8 +24,18 @@ class MCPPipeline(BaseReasoning):
     """
 
     @classmethod
+    def get_info(cls) -> dict:
+        """Get the pipeline information for the app to organize and display"""
+        return {
+            "id": "mcp",
+            "name": "MCP Pipeline",
+            "description": "MCP Pipeline",
+        }
+
+    @classmethod
     def get_user_settings(cls) -> dict:
         """Get the default user settings for this pipeline"""
+
         from ktem.llms.manager import llms
 
         llm = ""
@@ -64,6 +44,7 @@ class MCPPipeline(BaseReasoning):
             choices += [(_, _) for _ in llms.options().keys()]
         except Exception as e:
             logger.exception(f"Failed to get LLM options: {e}")
+
 
         return {
             "llm": {
@@ -76,15 +57,16 @@ class MCPPipeline(BaseReasoning):
                     "The language model to use for generating the answer. If None, "
                     "the application default language model will be used."
                 ),
-            }}
+            },
+        }
 
     @classmethod
     def get_pipeline(
         cls,
         user_settings: dict,
         state: dict,
-        retrievers: Optional[list["BaseComponent"]] = None,
-    ) -> "BaseReasoning":
+        retrievers: Optional[list] = None,
+    ):
         """Get the reasoning pipeline for the app to execute
 
         Args:
@@ -93,61 +75,69 @@ class MCPPipeline(BaseReasoning):
             retrievers (list): List of retrievers
         """
 
-        cls.tools = [{"name": "MCP Tool", "description": "MCP Tool", "parameters": {}}]
-        # cls.connect()
-
+        cls.tools = []
+        cls.tools = connect()
+        print(cls.tools)
         return cls()
-    
-    # def connect(self,) -> str:
-    #     return asyncio.run(self._connect())
-
-    # async def _connect(self) -> None:
-    #     try:
-    #         # for server in servers:
-    #             async with streamablehttp_client(
-    #                 url="https://127.0.0.1:8000/mcp",
-    #                 headers={},
-    #             ) as (read_stream, write_stream, _):
-    #                 async with ClientSession(
-    #                     read_stream, write_stream
-    #                 ) as local_session:
-    #                     await local_session.initialize()
-    #                     tools = await local_session.list_tools()
-    #                     for tool in tools.tools:
-    #                         self.tools.append(
-    #                             {
-    #                                 "name": tool.name,
-    #                                 "description": tool.description,
-    #                                 "parameters": tool.inputSchema,
-    #                             }
-    #                         )
-    #                         self.tool_url[tool.name] = {
-    #                             "url": "https://127.0.0.1:8000/mcp",
-    #                             "headers": {},
-    #                         }
-    #     except Exception as e:
-    #         print(f"An error happened so connect hasn't finished executing {e}")
-    #     return "tools_registered"
 
     def run(self, message: str, conv_id: str, history: list, **kwargs):  # type: ignore
         """Execute the reasoning pipeline"""
+        logging.warning("MCP Reasoning Pipeline is not 2 implemented yet.")
         raise NotImplementedError
-
-    def stream( 
+    
+    def stream(  # type: ignore
         self, message: str, conv_id: str, history: list, **kwargs  # type: ignore
     ):
-        """Stream the reasoning pipeline"""
-        print(f"THis is the result of {self.tools}")
-        return [Document(
-            content="MCP Pipeline is currently disabled.",
-            channel="chat"
-        )]
-    
-    @classmethod
-    def get_info(cls) -> dict:
-        """Get the pipeline information for the app to organize and display"""
-        return {
-            "id": "mcp",
-            "name": "MCP Pipeline",
-            "description": "MCP Pipeline",
-        }
+        """Stream the reasoning pipeline output"""
+        logging.warning("MCP Reasoning Pipeline streaming is not implemented yet.")
+
+        response = self.process_message(message=message)
+        messages=""
+        for msg in response:
+            if isinstance(msg, AIMessage):
+                content = msg.content or ""  # proteger contra None
+                if "</think>" in content:
+                    final = content.index("</think>") + len("</think>")
+                    msg_text = content[final:]  # todo después de </think>
+                else:
+                    msg_text = content
+                messages += msg_text
+
+        # result = [Document(channnel="chat",content=response) for response in response]
+        result = [Document(channel="chat",content=messages)]
+        logging.warning(f"The value of the response of the mcp is == {response} and the result is {result}")
+        return result
+
+    def process_message(
+        self,
+        message: str,
+    ) -> tuple:
+        return asyncio.run(self._procces_query(message))
+
+    async def _procces_query(self, message):
+        logging.info("Processing query")
+        agent = create_react_agent(
+            model=init_chat_model(model="qwen3:8b",model_provider="ollama",base_url="http://192.168.1.105:11434"),
+            tools=self.tools,
+        )
+        response = await agent.ainvoke({"messages": message})
+        logging.info("Done Processing Query")
+        response = response.get("messages")
+        logging.info("The response from the agent is %s", response)
+        return response
+
+def connect():
+
+    async def _connect():
+        client = MultiServerMCPClient({
+            "duckduckgo": {
+                "url": "http://localhost:8000/mcp",
+                "transport": "streamable_http",
+            }
+        })
+        print(f"Hello {client}")
+        tools = await client.get_tools()
+        print(f"Tools {tools}")
+        return tools 
+
+    return asyncio.run(_connect())
