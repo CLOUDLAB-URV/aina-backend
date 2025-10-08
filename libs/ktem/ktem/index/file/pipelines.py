@@ -292,7 +292,7 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         else:
             try:
                 rerankers = [
-                        reranking_models_manager[
+                    reranking_models_manager[
                         index_settings.get(
                             "reranking", reranking_models_manager.get_default_name()
                         )

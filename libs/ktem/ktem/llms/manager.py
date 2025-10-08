@@ -62,6 +62,7 @@ class LLMManager:
             AzureChatOpenAI,
             ChatOpenAI,
             LCAnthropicChat,
+            LCChatOpenAI,
             LCCohereChat,
             LCGeminiChat,
             LCOllamaChat,
@@ -76,6 +77,7 @@ class LLMManager:
             LCCohereChat,
             LCOllamaChat,
             LlamaCppChat,
+            LCChatOpenAI,
         ]
 
         for extra_vendor in getattr(flowsettings, "KH_LLM_EXTRA_VENDORS", []):
