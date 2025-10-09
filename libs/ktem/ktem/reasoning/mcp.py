@@ -102,7 +102,7 @@ class MCPPipeline(BaseReasoning):
             (msg, _) = chunk
             if isinstance(msg, AIMessageChunk):
                 if len(msg.content) > 0:
-                    return Document(content=msg.content, channel="chat")
+                    return msg.content, Document(content=msg.content, channel="chat")
         elif stream_mode == "updates":
             if "tools" in chunk:
                 tools = chunk["tools"]["messages"]
@@ -177,10 +177,11 @@ class MCPPipeline(BaseReasoning):
                     result = self.process_stream(stream_mode, chunk)
                     if result:
                         if isinstance(result, list):
-                            for doc in result:
-                                yield doc
-                        else:
-                            yield result
+                            yield from result
+                        if isinstance(result, tuple):
+                            text, doc = result
+                            output += text
+                            yield doc
                 except StopAsyncIteration:
                     break
         finally:
@@ -195,8 +196,6 @@ class MCPPipeline(BaseReasoning):
             # clear the chat message and render again
             yield Document(channel="chat", content=None)
             yield Document(channel="chat", content=processed_answer)
-
-        yield Document(content=output, channel="chat")
 
         # if logprobs:
         #     qa_score = np.exp(np.average(logprobs))
