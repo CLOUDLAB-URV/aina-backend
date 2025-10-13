@@ -2,9 +2,9 @@ name: unit-test
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, aina]
   push:
-    branches: [main]
+    branches: [main, aina]
 
 env:
   THEFLOW_TEMP_PATH: ./tmp
