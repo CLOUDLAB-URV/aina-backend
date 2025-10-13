@@ -287,6 +287,20 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         """
         use_llm_reranking = user_settings.get("use_llm_reranking", False)
 
+        if not user_settings["use_reranking"]:
+            rerankers = []  # type: ignore
+        else:
+            try:
+                rerankers = [
+                    reranking_models_manager[
+                        index_settings.get(
+                            "reranking", reranking_models_manager.get_default_name()
+                        )
+                    ]
+                ]
+            except ValueError as e:
+                logger.error(e)
+                rerankers = []
         retriever = cls(
             get_extra_table=user_settings["prioritize_table"],
             top_k=user_settings["num_retrieval"],
@@ -298,16 +312,8 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
             ],
             retrieval_mode=user_settings["retrieval_mode"],
             llm_scorer=(LLMTrulensScoring() if use_llm_reranking else None),
-            rerankers=[
-                reranking_models_manager[
-                    index_settings.get(
-                        "reranking", reranking_models_manager.get_default_name()
-                    )
-                ]
-            ],
+            rerankers=rerankers,
         )
-        if not user_settings["use_reranking"]:
-            retriever.rerankers = []  # type: ignore
 
         for reranker in retriever.rerankers:
             if isinstance(reranker, LLMReranking):

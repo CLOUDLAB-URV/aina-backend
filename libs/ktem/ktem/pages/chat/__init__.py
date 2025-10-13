@@ -1516,7 +1516,11 @@ class ChatPage(BasePage):
 
         # check if this is a newly created conversation
         if len(chat_history) == 1:
-            suggested_name = suggest_pipeline(chat_history).text
+            try:
+                suggested_name = suggest_pipeline(chat_history).text
+            except Exception as e:
+                print("Error in suggesting conversation name:", e)
+                return new_name, renamed
             suggested_name = strip_think_tag(suggested_name)
             suggested_name = suggested_name.replace('"', "").replace("'", "")[:40]
             new_name = gr.update(value=suggested_name)
