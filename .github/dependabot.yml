@@ -7,9 +7,12 @@ version: 2
 updates:
   - package-ecosystem: "pip"
     directory: "/libs/ktem"
+    open-pull-requests-limit: 100
     schedule:
       interval: "weekly"
+
   - package-ecosystem: "pip"
     directory: "/libs/kotaemon"
+    open-pull-requests-limit: 100
     schedule:
       interval: "weekly"
