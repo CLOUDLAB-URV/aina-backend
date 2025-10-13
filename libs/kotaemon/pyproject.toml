@@ -22,7 +22,7 @@ requires-python = ">= 3.10"
 description = "Kotaemon core library for AI development."
 dependencies = [
     "azure-ai-documentintelligence",
-    "beautifulsoup4>=4.12.3,<4.13",
+    "beautifulsoup4>=4.12.3,<4.15",
     "click>=8.1.7,<9",
     "cohere>=5.3.2,<6",
     "cookiecutter>=2.6.0,<2.7",
