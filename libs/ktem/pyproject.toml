@@ -32,6 +32,8 @@ dependencies = [
     "markdown>=3.6,<4",
     "tzlocal>=5.0",
     "langgraph>=0.5,<0.7",
+    "langchain-mcp-adapters>=0.1.0",
+    "pydantic<=2.10.6",
 ]
 authors = [
     { name = "@trducng", email = "john@cinnamon.is" },
