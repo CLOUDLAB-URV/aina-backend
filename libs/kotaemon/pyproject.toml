@@ -29,7 +29,7 @@ dependencies = [
     "fast_langdetect",
     "fastapi<=0.119.0",
     "gradio>=4.31.0,<4.40",
-    "html2text==2024.2.26",
+    "html2text==2025.4.15",
     "langchain>=0.3,<0.4",
     "langchain-community>=0.2,<0.4",
     "langchain-openai>=0.2.0,<0.4.0",
