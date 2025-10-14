@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 
 from sqlalchemy import JSON, Column
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, SQLModel
 from tzlocal import get_localzone
 
 

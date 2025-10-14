@@ -2,9 +2,9 @@ name: style-check
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, aina]
   push:
-    branches: [main, develop]
+    branches: [main, develop, aina]
 
 jobs:
   pre-commit:

@@ -1,8 +1,8 @@
-from ktem.db.engine import engine
 from ktem.db.base_models import Role
+from ktem.db.engine import engine
 from ktem.db.models import Agent, User
+from sqlmodel import Session, or_, select
 
-from sqlmodel import Session, select, or_
 
 def check_user_permissions_write(user, agent):
     """Check if the user has permission to modify the agent"""
@@ -17,6 +17,7 @@ def check_user_permissions_write(user, agent):
             return True
     return False
 
+
 def check_user_permissions_read(user, agent):
     """Check if the user has permission to view the agent"""
     if not user or not agent:
@@ -30,11 +31,13 @@ def check_user_permissions_read(user, agent):
             return True
     return False
 
+
 def can_create_agent(user):
     """Check if the user can create an agent"""
     if not user:
         return False
     return user.role in [Role.ADMIN, Role.AGENT_CREATOR]
+
 
 def load_agents_created(user_id):
     if not user_id:
@@ -48,7 +51,9 @@ def load_agents_created(user_id):
         if user.role == Role.ADMIN:
             statement = select(Agent)
         elif user.role == Role.AGENT_CREATOR:
-            statement = select(Agent).where(Agent.creators.contains(user))
+            statement = select(Agent).where(
+                Agent.creators.contains(user)  # type: ignore
+            )
         else:
             return []
 
@@ -56,6 +61,7 @@ def load_agents_created(user_id):
         agents = session.exec(statement).all()
 
         return agents
+
 
 def load_agents_accessible(user_id):
     if not user_id:
@@ -69,14 +75,18 @@ def load_agents_accessible(user_id):
         if user.role == Role.ADMIN:
             statement = select(Agent)
         elif user.role == Role.AGENT_CREATOR:
-            statement = select(Agent).where(
-                or_(
-                    Agent.users.contains(user),
-                    Agent.creators.contains(user),
+            statement = (
+                select(Agent)
+                .where(
+                    or_(
+                        Agent.users.contains(user),  # type: ignore
+                        Agent.creators.contains(user),  # type: ignore
+                    )
                 )
-            ).distinct()
+                .distinct()
+            )
         elif user.role == Role.CHAT_USER:
-            statement = select(Agent).where(Agent.users.contains(user))
+            statement = select(Agent).where(Agent.users.contains(user))  # type: ignore
         else:
             return []
 

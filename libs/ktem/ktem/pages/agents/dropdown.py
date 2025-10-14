@@ -29,13 +29,13 @@ class AgentSettings(BasePage):
     def _validate_agent_and_user(self, session, user_id, agent_id, action="modify"):
         """
         Validates agent and user existence and permissions.
-        
+
         Args:
             session: Database session
             user_id: User ID
-            agent_id: Agent ID  
+            agent_id: Agent ID
             action: Action being performed (for error message)
-            
+
         Returns:
             tuple: (agent, user) if validation passes, (None, None) if it fails
         """
@@ -61,7 +61,9 @@ class AgentSettings(BasePage):
 
     def update_index(self, user_id, agent_id, index_id):
         with Session(engine) as session:
-            agent, user = self._validate_agent_and_user(session, user_id, agent_id, "modify")
+            agent, user = self._validate_agent_and_user(
+                session, user_id, agent_id, "modify"
+            )
             if not agent or not user:
                 return
 
@@ -71,7 +73,9 @@ class AgentSettings(BasePage):
 
     def update_model(self, user_id, agent_id, model_name):
         with Session(engine) as session:
-            agent, user = self._validate_agent_and_user(session, user_id, agent_id, "modify")
+            agent, user = self._validate_agent_and_user(
+                session, user_id, agent_id, "modify"
+            )
             if not agent or not user:
                 return
 
@@ -83,7 +87,7 @@ class AgentSettings(BasePage):
         empty_response = (
             gr.update(choices=[], value=None),
             gr.update(choices=[], value=None),
-            gr.update(choices=[], value=None)
+            gr.update(choices=[], value=None),
         )
 
         with Session(engine) as session:
@@ -100,14 +104,8 @@ class AgentSettings(BasePage):
             model_value = agent.model.name if agent.model else None
 
             return (
-                gr.update(
-                    choices=all_indexes,
-                    value=index_value
-                ),
-                gr.update(
-                    choices=list(llms.options().keys()),
-                    value=model_value
-                ),
+                gr.update(choices=all_indexes, value=index_value),
+                gr.update(choices=list(llms.options().keys()), value=model_value),
             )
 
     def on_register_events(self):

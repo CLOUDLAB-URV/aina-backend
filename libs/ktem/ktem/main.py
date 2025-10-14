@@ -2,9 +2,9 @@ import gradio as gr
 from decouple import config
 from ktem.app import BaseApp
 from ktem.db.base_models import Role
+from ktem.pages.agents import AgentsTab
 from ktem.pages.chat import ChatPage
 from ktem.pages.help import HelpPage
-from ktem.pages.agents import AgentsTab
 from ktem.pages.resources import ResourcesTab
 from ktem.pages.settings import SettingsPage
 from ktem.pages.setup import SetupPage
@@ -172,7 +172,9 @@ class App(BaseApp):
                     if k == "login-tab":
                         tabs_update.append(gr.update(visible=False))
                     elif k == "agents-tab":
-                        tabs_update.append(gr.update(visible=is_agent_creator or is_admin))
+                        tabs_update.append(
+                            gr.update(visible=is_agent_creator or is_admin)
+                        )
                     elif k == "resources-tab":
                         tabs_update.append(gr.update(visible=is_admin))
                     else:

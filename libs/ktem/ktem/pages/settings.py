@@ -41,6 +41,9 @@ def render_setting_item(setting_item, value):
         "interactive": True,
     }
 
+    if hasattr(setting_item, "kwargs"):
+        kwargs.update(setting_item.kwargs)
+
     if setting_item.component in gr_cls_single_value:
         return gr_cls_single_value[setting_item.component](**kwargs)
 

@@ -1,13 +1,10 @@
 import gradio as gr
 from ktem.app import BasePage
-from ktem.db.engine import engine
-from ktem.db.models import Agent, User
-from ktem.db.base_models import Role
-from sqlmodel import Session, select
 
-from .users import AgentUsers
 from .control import AgentControl
 from .dropdown import AgentSettings
+from .users import AgentUsers
+
 
 class AgentsTab(BasePage):
     def __init__(self, app):

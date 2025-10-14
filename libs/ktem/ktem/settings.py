@@ -20,6 +20,7 @@ class SettingItem(BaseModel):
     metadata: dict = Field(default_factory=dict)
     component: str = "text"
     special_type: str = ""
+    kwargs: dict = Field(default_factory=dict)
 
 
 class BaseSettingGroup(BaseModel):
