@@ -4,7 +4,9 @@ from pydantic import BaseModel, Field
 class RerankingBase(BaseModel):
     name: str = Field(description="The name of the reranking model")
     spec: dict[str, str] = Field(description="The specification of the reranking model")
-    default: bool = Field(description="Whether this reranking model is the default one")
+    default: bool = Field(
+        default=False, description="Whether this reranking model is the default one"
+    )
 
 
 class RerankingCreate(RerankingBase):

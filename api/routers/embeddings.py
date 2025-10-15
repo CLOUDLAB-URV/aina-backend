@@ -45,8 +45,9 @@ async def update_embedding(
     embedding_name: str,
     spec: dict[str, Any],
     service: Annotated[EmbeddingService, Depends()],
+    default: bool = False,
 ):
-    service.update_embedding(embedding_name, spec)
+    service.update_embedding(embedding_name, spec, default)
     return {"message": f"Updated embedding: {embedding_name}"}
 
 
