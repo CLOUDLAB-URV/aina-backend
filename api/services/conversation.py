@@ -4,7 +4,7 @@ from ktem.db.models import Agent, Conversation, User
 from sqlmodel import Session, or_, select
 
 import flowsettings
-from api.schemas.conversations import ConversationCreate
+from api.schemas.conversations import ConversationCreate, ConversationUpdate
 
 _
 
@@ -93,3 +93,23 @@ class ConversationService:
 
             session.delete(conversation)
             session.commit()
+
+    def update_conversation(
+        self, user_id: str, conversation_id: str, conversation: ConversationUpdate
+    ) -> Conversation:
+        with Session(engine) as session:
+            existing_conversation = session.get(Conversation, conversation_id)
+            if existing_conversation is None:
+                raise LookupError(f"Conversation with id {conversation_id} not found")
+            if existing_conversation.user != user_id:
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to update conversation {conversation_id}"
+                )
+
+            update_data = conversation.model_dump(exclude_unset=True)
+            existing_conversation.sqlmodel_update(update_data)
+            session.add(existing_conversation)
+            session.commit()
+            session.refresh(existing_conversation)
+            return existing_conversation

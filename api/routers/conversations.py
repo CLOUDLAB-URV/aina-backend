@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends
 
 from api.core.dependencies import get_current_active_user
 from api.schemas.auth import UserInfo
-from api.schemas.conversations import ConversationCreate, ConversationInfo
+from api.schemas.conversations import (
+    ConversationCreate,
+    ConversationInfo,
+    ConversationUpdate,
+)
 from api.services.conversation import ConversationService
 
 router = APIRouter(
@@ -45,3 +49,14 @@ async def delete_conversation(
 ):
     """Delete a conversation by ID."""
     service.delete_conversation(current_user.id, conversation_id)
+
+
+@router.patch("/{conversation_id}")
+async def update_conversation(
+    conversation_id: str,
+    conversation: ConversationUpdate,
+    service: Annotated[ConversationService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+):
+    """Update a conversation by ID."""
+    return service.update_conversation(current_user.id, conversation_id, conversation)

@@ -29,3 +29,16 @@ class ConversationCreate(BaseModel):
     agent_id: str = Field(
         description="The ID of the agent associated with the conversation"
     )
+
+
+class ConversationUpdate(BaseModel):
+    name: str | None = Field(default=None, description="The name of the conversation")
+    user: str | None = Field(
+        default=None, description="The ID of the user who owns the conversation"
+    )
+    is_public: bool | None = Field(
+        default=None, description="Whether the conversation is public"
+    )
+    agent_id: str | None = Field(
+        default=None, description="The ID of the agent associated with the conversation"
+    )
