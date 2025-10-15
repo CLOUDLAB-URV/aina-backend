@@ -18,7 +18,7 @@ class UserLogin(BaseModel):
     password: str = Field(description="The password of the user")
 
 
-class UserResponse(BaseModel):
+class UserInfo(BaseModel):
     id: str = Field(description="The ID of the user")
     username: str = Field(description="The username of the user")
     role: Role

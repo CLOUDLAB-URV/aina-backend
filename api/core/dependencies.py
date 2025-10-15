@@ -2,16 +2,17 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from ktem.db.base_models import Role
+from ktem.pages.agents.common import can_create_agent
 
 from api.core.security import oauth2_scheme, verify_token
-from api.schemas.auth import UserResponse
+from api.schemas.auth import UserInfo
 from api.services.auth import AuthService
 
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     auth_service: Annotated[AuthService, Depends()],
-) -> UserResponse:
+) -> UserInfo:
     """Get current authenticated user."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -31,16 +32,16 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: Annotated[UserResponse, Depends(get_current_user)]
-) -> UserResponse:
+    current_user: Annotated[UserInfo, Depends(get_current_user)]
+) -> UserInfo:
     """Get current active user (all users are active in your model)."""
     return current_user
 
 
 # Role-based dependencies
 async def get_admin_user(
-    current_user: Annotated[UserResponse, Depends(get_current_active_user)]
-) -> UserResponse:
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)]
+) -> UserInfo:
     """Require admin role."""
     if current_user.role != Role.ADMIN:
         raise HTTPException(
@@ -50,10 +51,10 @@ async def get_admin_user(
 
 
 async def get_agent_creator_user(
-    current_user: Annotated[UserResponse, Depends(get_current_active_user)]
-) -> UserResponse:
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)]
+) -> UserInfo:
     """Require agent creator role or higher."""
-    if current_user.role not in [Role.AGENT_CREATOR, Role.ADMIN]:
+    if not can_create_agent(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Agent creator access required",

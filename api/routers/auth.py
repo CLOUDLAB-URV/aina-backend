@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from api.core.config import settings
 from api.core.dependencies import get_current_active_user
 from api.core.security import create_access_token
-from api.schemas.auth import Token, UserResponse
+from api.schemas.auth import Token, UserInfo
 from api.schemas.exceptions import GenericException
 from api.services.auth import AuthService
 
@@ -42,27 +42,17 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserInfo)
 async def read_users_me(
-    current_user: Annotated[UserResponse, Depends(get_current_active_user)]
-) -> UserResponse:
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)]
+) -> UserInfo:
     """Get current user information."""
     return current_user
 
 
-# @router.post("/register", response_model=UserResponse)
-# async def register_user(
-#     user_data: UserCreate,
-#     admin_user: Annotated[UserResponse, Depends(get_admin_user)],  # Only admins can create users
-#     auth_service: Annotated[AuthService, Depends()]
-# ) -> UserResponse:
-#     """Register a new user (admin only)."""
-#     return auth_service.create_user(user_data)
-
-
-@router.post("/test-token", response_model=UserResponse)
+@router.post("/test-token", response_model=UserInfo)
 async def test_token(
-    current_user: Annotated[UserResponse, Depends(get_current_active_user)]
-) -> UserResponse:
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)]
+) -> UserInfo:
     """Test access token."""
     return current_user

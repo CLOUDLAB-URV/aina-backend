@@ -3,11 +3,11 @@ from ktem.db.models import User, engine
 from sqlmodel import Session, select
 
 from api.core.security import verify_password
-from api.schemas.auth import UserResponse
+from api.schemas.auth import UserInfo
 
 
 class AuthService:
-    def authenticate_user(self, username: str, password: str) -> UserResponse | None:
+    def authenticate_user(self, username: str, password: str) -> UserInfo | None:
         try:
             with Session(engine) as session:
                 user = session.exec(
@@ -20,7 +20,7 @@ class AuthService:
                 if not verify_password(password, user.password):
                     return None
 
-                return UserResponse(
+                return UserInfo(
                     id=user.id,
                     username=user.username,
                     role=user.role,
@@ -31,7 +31,7 @@ class AuthService:
                 detail=f"Authentication error: {str(e)}",
             ) from e
 
-    def get_user_by_username(self, username: str) -> UserResponse | None:
+    def get_user_by_username(self, username: str) -> UserInfo | None:
         try:
             with Session(engine) as session:
                 user = session.exec(
@@ -41,7 +41,7 @@ class AuthService:
                 ).first()
                 if not user:
                     return None
-                return UserResponse(
+                return UserInfo(
                     id=user.id,
                     username=user.username,
                     role=user.role,
