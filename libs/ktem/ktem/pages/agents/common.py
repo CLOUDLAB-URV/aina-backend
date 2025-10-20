@@ -4,7 +4,7 @@ from ktem.db.models import Agent, User
 from sqlmodel import Session, or_, select
 
 
-def check_user_permissions_write(user, agent):
+def has_created(user, agent):
     """Check if the user has permission to modify the agent"""
     if not user or not agent:
         return False
@@ -18,16 +18,17 @@ def check_user_permissions_write(user, agent):
     return False
 
 
-def check_user_permissions_read(user, agent):
-    """Check if the user has permission to view the agent"""
+def has_access(user, agent):
+    """Check if the user has access to the agent"""
     if not user or not agent:
-        return False
-    if user.role == Role.CHAT_USER:
         return False
     if user.role == Role.ADMIN:
         return True
     if user.role == Role.AGENT_CREATOR:
-        if user in agent.creators:
+        if user in agent.creators or user in agent.users:
+            return True
+    if user.role == Role.CHAT_USER:
+        if user in agent.users:
             return True
     return False
 

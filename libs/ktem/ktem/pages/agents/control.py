@@ -7,12 +7,7 @@ from ktem.db.engine import engine
 from ktem.db.models import Agent, User
 from sqlmodel import Session, select
 
-from .common import (
-    can_create_agent,
-    check_user_permissions_read,
-    check_user_permissions_write,
-    load_agents_created,
-)
+from .common import can_create_agent, has_created, load_agents_created
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +107,7 @@ class AgentControl(BasePage):
             if not agent:
                 gr.Warning("No agent found.")
                 return gr.update(value=None), None, ""
-            if not check_user_permissions_read(user, agent):
+            if not has_created(user, agent):
                 gr.Warning("You do not have permission to view this agent.")
                 return gr.update(value=None), None, ""
             logger.info("Selected agent: %s (ID: %s)", agent.name, agent.id)
@@ -174,7 +169,7 @@ class AgentControl(BasePage):
             if not agent:
                 gr.Warning("Agent not found.")
                 return gr.update(visible=False), gr.update(choices=[], value=None)
-            if not check_user_permissions_write(user, agent):
+            if not has_created(user, agent):
                 gr.Warning("You do not have permission to delete this agent.")
                 return gr.update(visible=False), gr.update(choices=[], value=None)
             session.delete(agent)
@@ -207,7 +202,7 @@ class AgentControl(BasePage):
             if agent is None:
                 gr.Warning("Agent not found.")
                 return gr.update(value=None), gr.update(visible=False)
-            if not check_user_permissions_write(user, agent):
+            if not has_created(user, agent):
                 gr.Warning("You do not have permission to rename this agent.")
                 return gr.update(value=None), gr.update(visible=False)
             agent.name = new_name

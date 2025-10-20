@@ -5,7 +5,7 @@ from ktem.db.models import Agent, User
 from ktem.llms.manager import llms
 from sqlmodel import Session, select
 
-from .common import check_user_permissions_write
+from .common import has_created
 
 
 class AgentSettings(BasePage):
@@ -53,7 +53,7 @@ class AgentSettings(BasePage):
             gr.Warning("User not found.")
             return None, None
 
-        if not check_user_permissions_write(user, agent):
+        if not has_created(user, agent):
             gr.Warning(f"You do not have permission to {action} this agent.")
             return None, None
 

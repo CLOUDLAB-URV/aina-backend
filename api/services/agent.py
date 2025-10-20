@@ -1,13 +1,15 @@
+from typing import Any
+
 from ktem.db.engine import engine
 from ktem.db.models import Agent, User
 from ktem.pages.agents.common import (
-    check_user_permissions_write,
+    has_created,
     load_agents_accessible,
     load_agents_created,
 )
 from sqlmodel import Session, select
 
-from api.schemas.agents import AgentInfo
+from api.schemas.agents import AgentCreate, AgentUpdate
 
 
 class AgentService:
@@ -20,7 +22,7 @@ class AgentService:
     def list_agents_accessible(self, user_id: str) -> list[Agent]:
         return load_agents_accessible(user_id)
 
-    def add_agent(self, user_id: str, agent: AgentInfo) -> Agent:
+    def add_agent(self, user_id: str, agent: AgentCreate) -> Agent:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.id == user_id)).first()
             if user is None:
@@ -43,7 +45,7 @@ class AgentService:
             session.refresh(new_agent)
             return new_agent
 
-    def delete_agent(self, user_id: str, agent_id: str) -> None:
+    def delete_agent(self, user_id: str, agent_id: str):
         with Session(engine) as session:
             agent = session.get(Agent, agent_id)
             if agent is None:
@@ -51,7 +53,7 @@ class AgentService:
             user = session.get(User, user_id)
             if user is None:
                 raise LookupError(f"User with id {user_id} not found")
-            if not check_user_permissions_write(user, agent):
+            if not has_created(user, agent):
                 raise PermissionError(
                     f"User with id {user_id} does not have permission "
                     f"to delete agent {agent_id}"
@@ -60,7 +62,7 @@ class AgentService:
             session.delete(agent)
             session.commit()
 
-    def update_agent(self, user_id: str, agent_id: str, agent: AgentInfo) -> Agent:
+    def update_agent(self, user_id: str, agent_id: str, agent: AgentUpdate) -> Agent:
         with Session(engine) as session:
             existing_agent = session.get(Agent, agent_id)
             if existing_agent is None:
@@ -68,7 +70,7 @@ class AgentService:
             user = session.get(User, user_id)
             if user is None:
                 raise LookupError(f"User with id {user_id} not found")
-            if not check_user_permissions_write(user, existing_agent):
+            if not has_created(user, existing_agent):
                 raise PermissionError(
                     f"User with id {user_id} does not have permission "
                     f"to update agent {agent_id}"
@@ -79,3 +81,37 @@ class AgentService:
             session.commit()
             session.refresh(existing_agent)
             return existing_agent
+
+    def get_agent_settings(self, user_id: str, agent_id: str) -> dict[str, Any]:
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            if not has_created(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access settings for agent {agent_id}"
+                )
+            return agent.settings
+
+    def update_agent_settings(
+        self, user_id: str, agent_id: str, setting: dict[str, Any]
+    ):
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            if not has_created(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to update settings for agent {agent_id}"
+                )
+            agent.settings.update(setting)
+            session.add(agent)
+            session.commit()

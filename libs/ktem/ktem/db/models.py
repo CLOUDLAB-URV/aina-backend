@@ -4,7 +4,7 @@ import ktem.db.base_models as base_models
 from ktem.db.engine import engine
 from ktem.index.models import Index
 from ktem.llms.db import LLMTable
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 from theflow.settings import settings
 from theflow.utils.modules import import_dotted_string
 
@@ -95,6 +95,8 @@ class Agent(_base_agent, table=True):  # type: ignore
 
     model_name: Optional[str] = Field(default=None, foreign_key="llm_table.name")
     model: Optional["LLMTable"] = Relationship(back_populates="agents")
+
+    settings: dict = Field(default={}, sa_column=Column(JSON))
 
 
 class Settings(_base_settings, table=True):  # type: ignore

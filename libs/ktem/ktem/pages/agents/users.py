@@ -4,7 +4,7 @@ from ktem.db.engine import engine
 from ktem.db.models import Agent, User
 from sqlmodel import Session, select
 
-from .common import check_user_permissions_write
+from .common import has_created
 
 
 class AgentUsers(BasePage):
@@ -43,7 +43,7 @@ class AgentUsers(BasePage):
                 gr.Warning("User not found.")
                 return [], []
 
-            if not check_user_permissions_write(user, agent):
+            if not has_created(user, agent):
                 gr.Warning("You do not have permission to view this agent's users.")
                 return [], []
 
@@ -73,7 +73,7 @@ class AgentUsers(BasePage):
                 gr.Warning("User not found.")
                 return
 
-            if not check_user_permissions_write(user, agent):
+            if not has_created(user, agent):
                 gr.Warning("You do not have permission to modify this agent's users.")
                 return
 
@@ -104,7 +104,7 @@ class AgentUsers(BasePage):
                 gr.Warning("User not found.")
                 return
 
-            if not check_user_permissions_write(user, agent):
+            if not has_created(user, agent):
                 gr.Warning("You do not have permission to modify this agent's users.")
                 return
 
