@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, UploadFile, status
 from sse_starlette import EventSourceResponse
@@ -93,3 +93,13 @@ async def index_files(
     return EventSourceResponse(
         service.index_files(current_user.id, index_id, files, reindex)
     )
+
+@router.patch("/index/{index_id}")
+async def update_index(
+    index_id: int,
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    service: Annotated[IndexService, Depends()],
+    config: dict[str, Any] | None = None,
+    name: str | None = None,
+):
+    service.update_index(index_id, name, config)

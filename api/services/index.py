@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from fastapi import UploadFile
 from ktem.index.base import BaseIndex
@@ -16,7 +17,7 @@ class IndexService:
     def __init__(self):
         pass
 
-    def _get(self, index: BaseIndex):
+    def _get_info(self, index: BaseIndex):
         return IndexInfo(
             id=index.id,
             name=index.name,
@@ -33,9 +34,21 @@ class IndexService:
     def _get_shortname(self, index_type: str):
         return index_type.split(".")[-1]
 
+    def _get_index(self, index_id: int) -> BaseIndex:
+        index = app.index_manager.info().get(index_id)
+        if index is None:
+            raise LookupError(f"Index with id {index_id} not found")
+        return index
+
+    def _get_file_index(self, index_id: int) -> FileIndex:
+        index = self._get_index(index_id)
+        if not isinstance(index, FileIndex):
+            raise TypeError(f"Index with id {index_id} is not a FileIndex")
+        return index
+
     def list_indices(self):
         indices: list[BaseIndex] = app.index_manager.indices
-        return [self._get(index) for index in indices]
+        return [self._get_info(index) for index in indices]
 
     def list_index_types(self):
         return [
@@ -43,10 +56,8 @@ class IndexService:
         ]
 
     def get_index(self, index_id: int) -> IndexInfo:
-        index = app.index_manager.info().get(index_id)
-        if index is None:
-            raise LookupError(f"Index with id {index_id} not found")
-        return self._get(index)
+        index = self._get_index(index_id)
+        return self._get_info(index)
 
     def delete_index(self, index_id: int):
         app.index_manager.delete_index(index_id)
@@ -55,22 +66,33 @@ class IndexService:
         index_type = self._get_qualname(index_type)
         index = app.index_manager.build_index(name, config, index_type)
         app.index_manager.start_index(index.id, name, index.config, index_type)
-        return self._get(index)
+        return self._get_info(index)
+
+    def update_index(
+        self,
+        index_id: int,
+        name: str | None = None,
+        config: dict[str, Any] | None = None,
+    ):
+        index: BaseIndex = self._get_index(index_id)
+        new_name: str = index.name
+        new_config: dict[str, Any] = index.config
+        if name is not None:
+            new_name = name
+        if config is not None:
+            new_config = config
+        # update in db
+        app.index_manager.update_index(index_id, new_name, new_config)
+        # update in memory
+        index.name = new_name
+        index.config = new_config
 
     def list_files(self, user_id: str, index_id: int, name_pattern: str = ""):
-        index = app.index_manager.info().get(index_id)
-        if index is None:
-            raise LookupError(f"Index with id {index_id} not found")
-        if not isinstance(index, FileIndex):
-            raise TypeError(f"Index with id {index_id} is not a FileIndex")
+        index = self._get_file_index(index_id)
         return get_wrapper(index).list_file(user_id, name_pattern)
 
     def list_groups(self, user_id: str, index_id: int):
-        index = app.index_manager.info().get(index_id)
-        if index is None:
-            raise LookupError(f"Index with id {index_id} not found")
-        if not isinstance(index, FileIndex):
-            raise TypeError(f"Index with id {index_id} is not a FileIndex")
+        index = self._get_file_index(index_id)
         wrapper = get_wrapper(index)
         files, _ = wrapper.list_file(user_id)
         return wrapper.list_group(user_id, files)
@@ -82,12 +104,7 @@ class IndexService:
         files: list[UploadFile],
         reindex: bool = False,
     ):
-        index = app.index_manager.info().get(index_id)
-        if index is None:
-            raise LookupError(f"Index with id {index_id} not found")
-        if not isinstance(index, FileIndex):
-            raise TypeError(f"Index with id {index_id} is not a FileIndex")
-
+        index = self._get_file_index(index_id)
         wrapper = get_wrapper(index)
 
         upload_dir = tempfile.mkdtemp()
