@@ -24,9 +24,21 @@ class IndexService:
             config=index.config,
         )
 
+    def _get_qualname(self, index_type: str):
+        for key in app.index_manager.index_types.keys():
+            if key.split(".")[-1] == index_type:
+                return key
+        raise ValueError(f'Index type "{index_type}" not found')
+
+    def _get_shortname(self, index_type: str):
+        return index_type.split(".")[-1]
+
     def list_indices(self):
         indices: list[BaseIndex] = app.index_manager.indices
         return [self._get(index) for index in indices]
+
+    def list_index_types(self):
+        return [self._get_shortname(key) for key in app.index_manager.index_types.keys()]
 
     def get_index(self, index_id: int) -> IndexInfo:
         index = app.index_manager.info().get(index_id)
@@ -38,8 +50,9 @@ class IndexService:
         app.index_manager.delete_index(index_id)
 
     def create_index(self, name: str, config: dict, index_type: str) -> IndexInfo:
+        index_type = self._get_qualname(index_type)
         index = app.index_manager.build_index(name, config, index_type)
-        app.index_manager.start_index(index.id, name, config, index_type)
+        app.index_manager.start_index(index.id, name, index.config, index_type)
         return self._get(index)
 
     def list_files(self, user_id: str, index_id: int, name_pattern: str = ""):

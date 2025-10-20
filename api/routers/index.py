@@ -12,9 +12,7 @@ from api.services.index import IndexService
 router = APIRouter(
     prefix="/index",
     tags=["index"],
-    dependencies=[
-        Depends(get_current_active_user)
-    ],  # Only admin users can manage indices
+    dependencies=[Depends(get_current_active_user)],
     responses={
         403: {"description": "Forbidden", "model": GenericException},
         401: {"description": "Unauthorized", "model": GenericException},
@@ -29,8 +27,15 @@ async def list_indices(service: Annotated[IndexService, Depends()]):
     return service.list_indices()
 
 
+@router.get("/types", dependencies=[Depends(get_agent_creator_user)])
+async def list_index_types(
+    service: Annotated[IndexService, Depends()],
+):
+    return service.list_index_types()
+
+
 @router.get(
-    "/{index_id}",
+    "/index/{index_id}",
     response_model=IndexInfo,
     dependencies=[Depends(get_agent_creator_user)],
 )
@@ -38,7 +43,7 @@ async def get_index(index_id: int, service: Annotated[IndexService, Depends()]):
     return service.get_index(index_id)
 
 
-@router.delete("/{index_id}", dependencies=[Depends(get_agent_creator_user)])
+@router.delete("/index/{index_id}", dependencies=[Depends(get_agent_creator_user)])
 async def delete_index(index_id: int, service: Annotated[IndexService, Depends()]):
     service.delete_index(index_id)
 
@@ -58,7 +63,7 @@ async def create_index(
     return service.create_index(name, config, index_type)
 
 
-@router.get("/{index_id}/")
+@router.get("/index/{index_id}/")
 async def list_files(
     index_id: int,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
@@ -68,7 +73,7 @@ async def list_files(
     return service.list_files(current_user.id, index_id, name_pattern)
 
 
-@router.get("/{index_id}/groups")
+@router.get("/index/{index_id}/groups")
 async def list_groups(
     index_id: int,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
@@ -77,11 +82,11 @@ async def list_groups(
     return service.list_groups(current_user.id, index_id)
 
 
-@router.post("/{index_id}/index_files", response_class=EventSourceResponse)
+@router.post("/index/{index_id}/index_files", response_class=EventSourceResponse)
 async def index_files(
     index_id: int,
     files: list[UploadFile],
-    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
     service: Annotated[IndexService, Depends()],
     reindex: bool = False,
 ):
