@@ -1,12 +1,9 @@
-from ktem.db import models as _
 from ktem.db.engine import engine
 from ktem.db.models import Agent, Conversation, User
 from sqlmodel import Session, or_, select
+from theflow.settings import settings as flowsettings
 
-import flowsettings
 from api.schemas.conversations import ConversationCreate, ConversationUpdate
-
-_
 
 
 class ConversationService:
