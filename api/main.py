@@ -20,6 +20,14 @@ app = FastAPI(
 )
 
 
+@app.exception_handler(PermissionError)
+async def permission_error_exception_handler(request: Request, exc: PermissionError):
+    return JSONResponse(
+        status_code=403,
+        content={"detail": f"Permission error: {exc}"},
+    )
+
+
 @app.exception_handler(LookupError)
 async def lookup_error_exception_handler(request: Request, exc: LookupError):
     return JSONResponse(
@@ -28,11 +36,27 @@ async def lookup_error_exception_handler(request: Request, exc: LookupError):
     )
 
 
-@app.exception_handler(PermissionError)
-async def permission_error_exception_handler(request: Request, exc: PermissionError):
+@app.exception_handler(ValueError)
+async def value_error_exception_handler(request: Request, exc: ValueError):
     return JSONResponse(
-        status_code=403,
-        content={"detail": f"Permission error: {exc}"},
+        status_code=400,
+        content={"detail": f"Value error: {exc}"},
+    )
+
+
+@app.exception_handler(AttributeError)
+async def attribute_error_exception_handler(request: Request, exc: AttributeError):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Attribute error: {exc}"},
+    )
+
+
+@app.exception_handler(TypeError)
+async def type_error_exception_handler(request: Request, exc: TypeError):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Type error: {exc}"},
     )
 
 
