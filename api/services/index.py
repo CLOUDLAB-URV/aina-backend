@@ -1,7 +1,6 @@
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Generator
 
 from fastapi import UploadFile
 from ktem.index.base import BaseIndex
@@ -82,17 +81,11 @@ class IndexService:
             filename = file.filename
             if not filename:
                 raise ValueError("Uploaded file must have a filename")
-            suffix = Path(filename).suffix
-            tmp = tempfile.NamedTemporaryFile(
-                delete=False, dir=upload_dir, suffix=suffix
-            )
-            try:
+            with open(Path(upload_dir) / filename, "wb") as tmp:
                 shutil.copyfileobj(file.file, tmp)
                 file_paths.append(tmp.name)
-            finally:
-                tmp.close()
 
-        yield from self._index_fn(
+        ret = yield from self._index_fn(
             ui=wrapper,
             index=index,
             files=file_paths,
@@ -101,6 +94,13 @@ class IndexService:
             user_id=user_id,
             reindex=reindex,
         )
+
+        try:
+            shutil.rmtree(upload_dir)
+        except Exception as e:
+            print(f"Error removing temporary upload dir {upload_dir}: {e}")
+
+        return ret
 
     def _index_fn(
         self,
@@ -111,7 +111,7 @@ class IndexService:
         settings: dict,
         user_id: str,
         reindex: bool = False,
-    ) -> Generator[tuple[str, str], None, None]:
+    ):
         if urls:
             files = [it.strip() for it in urls.split("\n")]
             errors = ui.validate_urls(files)
