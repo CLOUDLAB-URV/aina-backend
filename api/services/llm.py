@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any
 
 import ktem.db.models as _
@@ -29,6 +30,7 @@ class LlmService:
     def list_llms(self) -> dict[str, LlmInfo]:
         res = {}
         for name, info in self.manager.info().items():
+            info = deepcopy(info)
             vendor_name, vendor_qualname = self._process_vendor_info(info)
             res[name] = LlmInfo(
                 **info, vendor_name=vendor_name, vendor_qualname=vendor_qualname
@@ -38,6 +40,7 @@ class LlmService:
     def get_llm(self, llm_name: str) -> LlmInfo:
         self._llm_exists(llm_name)
         info = self.manager.info()[llm_name]
+        info = deepcopy(info)
         vendor_name, vendor_qualname = self._process_vendor_info(info)
         return LlmInfo(**info, vendor_name=vendor_name, vendor_qualname=vendor_qualname)
 

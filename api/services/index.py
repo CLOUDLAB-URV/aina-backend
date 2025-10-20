@@ -38,7 +38,9 @@ class IndexService:
         return [self._get(index) for index in indices]
 
     def list_index_types(self):
-        return [self._get_shortname(key) for key in app.index_manager.index_types.keys()]
+        return [
+            self._get_shortname(key) for key in app.index_manager.index_types.keys()
+        ]
 
     def get_index(self, index_id: int) -> IndexInfo:
         index = app.index_manager.info().get(index_id)

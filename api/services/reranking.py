@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any
 
 import ktem.db.models as _
@@ -28,6 +29,7 @@ class RerankingService:
     def list_rerankings(self) -> dict[str, RerankingInfo]:
         res = {}
         for name, info in self.manager.info().items():
+            info = deepcopy(info)
             vendor_name, vendor_qualname = self._process_vendor_info(info)
             res[name] = RerankingInfo(
                 **info, vendor_name=vendor_name, vendor_qualname=vendor_qualname
@@ -37,6 +39,7 @@ class RerankingService:
     def get_reranking(self, reranking_name: str) -> RerankingInfo:
         self._reranking_exists(reranking_name)
         info = self.manager.info()[reranking_name]
+        info = deepcopy(info)
         vendor_name, vendor_qualname = self._process_vendor_info(info)
         return RerankingInfo(
             **info, vendor_name=vendor_name, vendor_qualname=vendor_qualname
