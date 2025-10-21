@@ -1,4 +1,12 @@
+from enum import Enum
+
 from pydantic import BaseModel, Field
+
+
+class SelectMode(Enum):
+    ALL = "all"
+    SELECT = "select"
+    DISABLED = "disabled"
 
 
 class ChatRequest(BaseModel):
@@ -14,3 +22,9 @@ class ChatRequest(BaseModel):
         default=None, description="Whether to use citation"
     )
     language: str | None = Field(default=None, description="Language for the response")
+    select_mode: SelectMode = Field(
+        default=SelectMode.ALL, description="Mode for selecting index files"
+    )
+    selected_files: list[str] = Field(
+        default=[], description="List of selected files for indexing"
+    )

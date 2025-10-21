@@ -5,10 +5,11 @@ from ktem.db.models import Agent, Conversation, User
 from ktem.index.base import BaseIndex
 from ktem.index.file.index import FileIndex
 from ktem.pages.agents.common import has_access
+from ktem.settings import BaseSettingGroup
 from sqlmodel import Session, select
 
 from api.app import app
-from api.schemas.chat import ChatRequest
+from api.schemas.chat import ChatRequest, SelectMode
 
 DEFAULT_SETTING = "(default)"
 
@@ -16,6 +17,15 @@ DEFAULT_SETTING = "(default)"
 class ChatService:
     def __init__(self):
         pass
+
+    def _get_index(self, agent: Agent) -> BaseIndex:
+        index_id = agent.index_id
+        if index_id is None:
+            raise LookupError(f"Agent with id {agent.id} has no index assigned")
+        index = app.index_manager.info().get(index_id)
+        if index is None:
+            raise LookupError(f"Index with id {index_id} not found")
+        return index
 
     def chat_with_agent(
         self,
@@ -39,6 +49,8 @@ class ChatService:
                     f"to chat with agent {agent_id}"
                 )
 
+            index = self._get_index(agent)
+
             conversation = session.get(Conversation, conversation_id)
             if conversation is None:
                 raise LookupError(f"Conversation with id {conversation_id} not found")
@@ -48,19 +60,25 @@ class ChatService:
                     f"to access conversation {conversation_id}"
                 )
 
-            settings = deepcopy(app.default_settings.flatten())
-            settings.update(agent.settings or {})
+            settings = deepcopy(app.default_settings)
+            settings.index.options[index.id] = BaseSettingGroup(
+                settings=index.get_user_settings()
+            )
+            settings_flat = deepcopy(settings.flatten())
+            settings_flat.update(agent.settings or {})
 
             pipeline, reasoning_state = self._create_pipeline(
                 agent=agent,
                 user_id=user_id,
-                settings=settings,
+                settings=settings_flat,
                 state=app.chat_state,
                 reasoning_type=request.reasoning_type,
                 llm_type=request.llm_type,
                 use_mind_map=request.use_mind_map,
                 use_citation=request.use_citation,
                 language=request.language,
+                select_mode=request.select_mode,
+                selected_files=request.selected_files,
             )
 
             history = [(request.message, "")]
@@ -85,6 +103,8 @@ class ChatService:
         use_mind_map: bool | None = None,
         use_citation: bool | None = None,
         language: str | None = None,
+        select_mode: SelectMode = SelectMode.ALL,
+        selected_files: list[str] = [],
     ):
         reasoning_mode = (
             settings["reasoning.use"]
@@ -115,7 +135,7 @@ class ChatService:
         # get retrievers
         retrievers = []
 
-        index_selected = ["all", [], user_id]
+        index_selected = [select_mode.value, selected_files, user_id]
 
         indices = self._get_indices_for_agent(agent)
 

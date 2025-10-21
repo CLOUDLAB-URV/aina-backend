@@ -26,11 +26,12 @@ class App:
         self.index_manager = IndexManager(self)
         self.index_manager.on_application_startup()
 
-        for index in self.index_manager.indices:
-            options = index.get_user_settings()
-            self.default_settings.index.options[index.id] = BaseSettingGroup(
-                settings=options
-            )
+        # index: BaseIndex
+        # for index in self.index_manager.indices:
+        #     options = index.get_user_settings()
+        #     self.default_settings.index.options[index.id] = BaseSettingGroup(
+        #         settings=options
+        #     )
 
     def _register_reasonings(self):
         """Register the reasoning components from app settings"""
