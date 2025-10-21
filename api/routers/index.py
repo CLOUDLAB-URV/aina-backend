@@ -121,3 +121,12 @@ async def get_admin_settings(
     service: Annotated[IndexService, Depends()],
 ):
     return service.get_admin_settings(index_type)
+
+
+@router.get("/index/{index_id}/settings", response_model=dict[str, Any])
+async def get_index_settings(
+    index_id: int,
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.get_index_settings(index_id)

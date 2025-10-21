@@ -106,6 +106,10 @@ class IndexService:
         index_cls: type[BaseIndex] = import_dotted_string(index_type, safe=False)
         return index_cls.get_admin_settings()
 
+    def get_index_settings(self, index_id: int) -> dict[str, Any]:
+        index = self._get_index(index_id)
+        return index.get_user_settings()
+
     def index_files(
         self,
         user_id: str,
