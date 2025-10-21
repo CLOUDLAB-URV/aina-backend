@@ -4,9 +4,12 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import UploadFile
+from ktem.db.engine import engine
+from ktem.db.models import Agent
 from ktem.index.base import BaseIndex
 from ktem.index.file.index import FileIndex
 from ktem.index.file.ui import FileIndexPage
+from sqlmodel import Session
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import import_dotted_string
 
@@ -106,10 +109,16 @@ class IndexService:
     def index_files(
         self,
         user_id: str,
+        agent_id: str,
         index_id: int,
         files: list[UploadFile],
         reindex: bool = False,
     ):
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            settings = agent.settings or {}
         index = self._get_file_index(index_id)
         wrapper = get_wrapper(index)
 
@@ -128,7 +137,7 @@ class IndexService:
             index=index,
             files=file_paths,
             urls="",
-            settings={},
+            settings=settings,
             user_id=user_id,
             reindex=reindex,
         )

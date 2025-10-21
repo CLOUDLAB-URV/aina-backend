@@ -85,14 +85,16 @@ async def list_groups(
 @router.post("/index/{index_id}/index_files", response_class=EventSourceResponse)
 async def index_files(
     index_id: int,
+    agent_id: str,
     files: list[UploadFile],
     current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
     service: Annotated[IndexService, Depends()],
     reindex: bool = False,
 ):
     return EventSourceResponse(
-        service.index_files(current_user.id, index_id, files, reindex)
+        service.index_files(current_user.id, agent_id, index_id, files, reindex)
     )
+
 
 @router.patch("/index/{index_id}")
 async def update_index(
@@ -103,6 +105,7 @@ async def update_index(
     name: str | None = None,
 ):
     service.update_index(index_id, name, config)
+
 
 @router.get("/admin_settings", response_model=dict[str, Any])
 async def get_admin_settings(
