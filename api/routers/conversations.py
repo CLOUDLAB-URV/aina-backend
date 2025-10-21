@@ -9,11 +9,18 @@ from api.schemas.conversations import (
     ConversationInfo,
     ConversationUpdate,
 )
+from api.schemas.exceptions import GenericException
 from api.services.conversation import ConversationService
 
 router = APIRouter(
     prefix="/conversations",
     tags=["conversations"],
+    dependencies=[Depends(get_current_active_user)],
+    responses={
+        403: {"description": "Forbidden", "model": GenericException},
+        401: {"description": "Unauthorized", "model": GenericException},
+        404: {"description": "Not Found", "model": GenericException},
+    },
 )
 
 

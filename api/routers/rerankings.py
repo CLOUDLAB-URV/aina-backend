@@ -14,10 +14,9 @@ router = APIRouter(
     responses={
         403: {"description": "Forbidden", "model": GenericException},
         401: {"description": "Unauthorized", "model": GenericException},
+        404: {"description": "Not Found", "model": GenericException},
     },
 )
-
-r404 = {404: {"description": "Not Found", "model": GenericException}}
 
 
 @router.get("/")
@@ -25,14 +24,14 @@ async def list_rerankings(service: Annotated[RerankingService, Depends()]):
     return service.list_rerankings()
 
 
-@router.get("/reranking/{reranking_name}", response_model=RerankingInfo, responses=r404)
+@router.get("/reranking/{reranking_name}", response_model=RerankingInfo)
 async def get_reranking(
     reranking_name: str, service: Annotated[RerankingService, Depends()]
 ):
     return service.get_reranking(reranking_name)
 
 
-@router.delete("/reranking/{reranking_name}", responses=r404)
+@router.delete("/reranking/{reranking_name}")
 async def delete_reranking(
     reranking_name: str, service: Annotated[RerankingService, Depends()]
 ):
@@ -40,7 +39,7 @@ async def delete_reranking(
     return {"message": f"Deleted reranking: {reranking_name}"}
 
 
-@router.patch("/reranking/{reranking_name}", responses=r404)
+@router.patch("/reranking/{reranking_name}")
 async def update_reranking(
     service: Annotated[RerankingService, Depends()],
     reranking_name: str,
@@ -64,7 +63,7 @@ async def list_reranking_vendors(service: Annotated[RerankingService, Depends()]
     return service.list_vendors()
 
 
-@router.get("/vendor/{vendor_name}", responses=r404)
+@router.get("/vendor/{vendor_name}")
 async def get_reranking_vendor_desc(
     vendor_name: str, service: Annotated[RerankingService, Depends()]
 ):

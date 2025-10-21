@@ -16,6 +16,7 @@ router = APIRouter(
     responses={
         403: {"description": "Forbidden", "model": GenericException},
         401: {"description": "Unauthorized", "model": GenericException},
+        404: {"description": "Not Found", "model": GenericException},
     },
 )
 
@@ -63,7 +64,7 @@ async def create_index(
     return service.create_index(name, config, index_type)
 
 
-@router.get("/index/{index_id}/")
+@router.get("/index/{index_id}/files")
 async def list_files(
     index_id: int,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
@@ -92,7 +93,13 @@ async def index_files(
     reindex: bool = False,
 ):
     return EventSourceResponse(
-        service.index_files(current_user.id, agent_id, index_id, files, reindex)
+        service.index_files(
+            current_user.id,
+            agent_id,
+            index_id,
+            files,
+            reindex,
+        )
     )
 
 

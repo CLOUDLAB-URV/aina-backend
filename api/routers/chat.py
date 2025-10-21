@@ -12,13 +12,14 @@ from api.services.chat import ChatService
 router = APIRouter(
     prefix="/chat",
     tags=["chat"],
-    responses={
-        401: {"description": "Unauthorized", "model": GenericException},
-        403: {"description": "Forbidden", "model": GenericException},
-    },
     dependencies=[
         Depends(get_current_active_user)  # All routes require authentication
     ],
+    responses={
+        401: {"description": "Unauthorized", "model": GenericException},
+        403: {"description": "Forbidden", "model": GenericException},
+        404: {"description": "Not Found", "model": GenericException},
+    },
 )
 
 
