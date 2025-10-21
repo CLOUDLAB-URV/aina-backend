@@ -19,7 +19,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("/", response_model=dict[str, RerankingInfo])
 async def list_rerankings(service: Annotated[RerankingService, Depends()]):
     return service.list_rerankings()
 
