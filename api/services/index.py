@@ -8,6 +8,7 @@ from ktem.index.base import BaseIndex
 from ktem.index.file.index import FileIndex
 from ktem.index.file.ui import FileIndexPage
 from theflow.settings import settings as flowsettings
+from theflow.utils.modules import import_dotted_string
 
 from api.app import app
 from api.schemas.index import IndexInfo
@@ -96,6 +97,11 @@ class IndexService:
         wrapper = get_wrapper(index)
         files, _ = wrapper.list_file(user_id)
         return wrapper.list_group(user_id, files)
+
+    def get_admin_settings(self, index_type: str) -> dict[str, Any]:
+        index_type = self._get_qualname(index_type)
+        index_cls: type[BaseIndex] = import_dotted_string(index_type, safe=False)
+        return index_cls.get_admin_settings()
 
     def index_files(
         self,

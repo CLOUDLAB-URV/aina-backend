@@ -103,3 +103,11 @@ async def update_index(
     name: str | None = None,
 ):
     service.update_index(index_id, name, config)
+
+@router.get("/admin_settings", response_model=dict[str, Any])
+async def get_admin_settings(
+    index_type: str,
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.get_admin_settings(index_type)
