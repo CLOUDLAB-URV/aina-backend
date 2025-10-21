@@ -11,6 +11,7 @@ from api.routers import (
     embeddings,
     index,
     llms,
+    reasonings,
     rerankings,
 )
 
@@ -68,6 +69,7 @@ app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(agents.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=settings.API_V1_STR)
 app.include_router(index.router, prefix=settings.API_V1_STR)
+app.include_router(reasonings.router, prefix=settings.API_V1_STR)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
