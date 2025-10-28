@@ -4,7 +4,7 @@ from ktem.db.models import Agent, User
 from sqlmodel import Session, or_, select
 
 
-def has_created(user, agent):
+def has_created(user: User, agent: Agent):
     """Check if the user has permission to modify the agent"""
     if not user or not agent:
         return False
@@ -18,7 +18,7 @@ def has_created(user, agent):
     return False
 
 
-def has_access(user, agent):
+def has_access(user: User, agent: Agent):
     """Check if the user has access to the agent"""
     if not user or not agent:
         return False
