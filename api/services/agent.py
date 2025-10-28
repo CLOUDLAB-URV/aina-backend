@@ -9,6 +9,8 @@ from ktem.pages.agents.common import (
 )
 from sqlmodel import Session, select
 
+from api.app import app
+from api.core.utils import populate_agent_settings
 from api.schemas.agents import AgentCreate, AgentUpdate
 
 
@@ -97,6 +99,26 @@ class AgentService:
                 )
             return agent.settings
 
+    def get_current_settings(self, user_id: str, agent_id: str) -> dict[str, Any]:
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            if not has_created(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access settings for agent {agent_id}"
+                )
+            if agent.index_id is None:
+                raise LookupError(f"Agent with id {agent_id} has no index assigned")
+            index = app.index_manager.info().get(agent.index_id)
+            if index is None:
+                raise LookupError(f"Index with id {agent.index_id} not found")
+            return populate_agent_settings(agent.settings or {}, index, None)
+
     def update_agent_settings(
         self, user_id: str, agent_id: str, setting: dict[str, Any]
     ):
@@ -115,3 +137,43 @@ class AgentService:
             agent.settings.update(setting)
             session.add(agent)
             session.commit()
+
+    def get_index_settings(self, user_id: str, agent_id: str) -> dict[str, Any]:
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            if not has_created(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access index settings for agent {agent_id}"
+                )
+            prefix = f"index.options.{agent.index_id or ''}."
+            stripped_settings = {}
+            for key, value in agent.settings.items():
+                if key.startswith(prefix):
+                    stripped_settings[key[len(prefix) :]] = value
+            return stripped_settings
+
+    def get_reasoning_settings(self, user_id: str, agent_id: str) -> dict[str, Any]:
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            if not has_created(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access reasoning settings for agent {agent_id}"
+                )
+            prefix = f"reasoning.options.{agent.reasoning_id or ''}."
+            stripped_settings = {}
+            for key, value in agent.settings.items():
+                if key.startswith(prefix):
+                    stripped_settings[key[len(prefix) :]] = value
+            return stripped_settings

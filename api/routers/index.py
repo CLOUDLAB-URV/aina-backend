@@ -83,9 +83,8 @@ async def list_groups(
     return service.list_groups(current_user.id, index_id)
 
 
-@router.post("/index/{index_id}/index_files", response_class=EventSourceResponse)
+@router.post("/index", response_class=EventSourceResponse)
 async def index_files(
-    index_id: int,
     agent_id: str,
     files: list[UploadFile],
     current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
@@ -96,7 +95,6 @@ async def index_files(
         service.index_files(
             current_user.id,
             agent_id,
-            index_id,
             files,
             reindex,
         )

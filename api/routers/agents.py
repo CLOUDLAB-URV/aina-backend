@@ -14,6 +14,7 @@ router = APIRouter(
     responses={
         401: {"description": "Unauthorized", "model": GenericException},
         403: {"description": "Forbidden", "model": GenericException},
+        404: {"description": "Not Found", "model": GenericException},
     },
     dependencies=[
         Depends(get_current_active_user)  # All routes require authentication
@@ -80,6 +81,16 @@ async def get_agent_settings(
     return service.get_agent_settings(current_user.id, agent_id)
 
 
+@router.get("/settings/{agent_id}/current", response_model=dict[str, Any])
+async def get_current_agent_settings(
+    service: Annotated[AgentService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    agent_id: str,
+):
+    """Get current settings for an agent by ID."""
+    return service.get_current_settings(current_user.id, agent_id)
+
+
 @router.patch("/settings/{agent_id}", response_model=None)
 async def update_agent_settings(
     service: Annotated[AgentService, Depends()],
@@ -89,3 +100,23 @@ async def update_agent_settings(
 ):
     """Update settings for an agent by ID."""
     service.update_agent_settings(current_user.id, agent_id, settings)
+
+
+@router.get("/settings/{agent_id}/index", response_model=dict[str, Any])
+async def get_index_settings(
+    service: Annotated[AgentService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    agent_id: str,
+):
+    """Get index settings for an agent by ID."""
+    return service.get_index_settings(current_user.id, agent_id)
+
+
+@router.get("/settings/{agent_id}/reasoning", response_model=dict[str, Any])
+async def get_reasoning_settings(
+    service: Annotated[AgentService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    agent_id: str,
+):
+    """Get reasoning settings for an agent by ID."""
+    return service.get_reasoning_settings(current_user.id, agent_id)

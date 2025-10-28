@@ -42,10 +42,10 @@ class App:
             reasoning_cls: type[BaseReasoning] = import_dotted_string(value, safe=False)
             rid: str = reasoning_cls.get_info()["id"]
             self.reasonings[rid] = reasoning_cls
-            options = reasoning_cls().get_user_settings()
-            self.default_settings.reasoning.options[rid] = BaseSettingGroup(
-                settings=options
-            )
+            # options = reasoning_cls().get_user_settings()
+            # self.default_settings.reasoning.options[rid] = BaseSettingGroup(
+            #     settings=options
+            # )
 
 
 app = App()
