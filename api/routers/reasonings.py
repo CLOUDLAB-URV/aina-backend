@@ -22,9 +22,9 @@ router = APIRouter(
 async def list_reasonings(service: Annotated[ReasoningService, Depends()]):
     return service.list_reasonings()
 
+
 @router.get("/{reasoning_name}/config", response_model=dict)
 async def get_reasoning_config(
-    reasoning_name: str,
-    service: Annotated[ReasoningService, Depends()]
+    reasoning_name: str, service: Annotated[ReasoningService, Depends()]
 ):
     return service.get_reasoning_config(reasoning_name)
