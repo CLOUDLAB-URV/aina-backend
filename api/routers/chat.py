@@ -35,3 +35,14 @@ async def chat_with_agent(
     return EventSourceResponse(
         service.chat_with_agent(agent_id, conversation_id, current_user.id, request)
     )
+
+
+@router.post("/{agent_id}/{conversation_id}/select")
+async def select_conversation(
+    agent_id: str,
+    conversation_id: str,
+    service: Annotated[ChatService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+):
+    """Select data sources for a specific conversation."""
+    return service.select_conversation(agent_id, conversation_id, current_user.id)

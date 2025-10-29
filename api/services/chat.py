@@ -5,11 +5,15 @@ from ktem.db.models import Agent, Conversation, User
 from ktem.index.base import BaseIndex
 from ktem.index.file.index import FileIndex
 from ktem.pages.agents.common import has_access
+from ktem.pages.chat.chat_suggestion import ChatSuggestion
+from ktem.utils.conversation import sync_retrieval_n_message
 from sqlmodel import Session, select
+from theflow.settings import settings as flowsettings
 
 from api.app import app
 from api.core.utils import populate_agent_settings
 from api.schemas.chat import ChatRequest, SelectMode
+from kotaemon.base.schema import Document
 
 DEFAULT_SETTING = "(default)"
 
@@ -26,6 +30,67 @@ class ChatService:
         if index is None:
             raise LookupError(f"Index with id {index_id} not found")
         return index
+
+    def select_conversation(
+        self,
+        agent_id: str,
+        conversation_id: str,
+        user_id: str,
+    ):
+        [[s] for s in ChatSuggestion.CHAT_SAMPLES]
+        with Session(engine) as session:
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+
+            if not has_access(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access agent {agent_id}"
+                )
+
+            conversation = session.get(Conversation, conversation_id)
+            if conversation is None:
+                raise LookupError(f"Conversation with id {conversation_id} not found")
+            if conversation.user != user_id:
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access conversation {conversation_id}"
+                )
+            if conversation.agent_id != agent_id:
+                raise PermissionError(
+                    f"Conversation with id {conversation_id} is not associated "
+                    f"with agent {agent_id}"
+                )
+
+            return self._select_conversation(conversation)
+
+    def _select_conversation(
+        self,
+        conversation: Conversation,
+    ):
+        selected = conversation.data_source.get("selected", {})
+        messages = conversation.data_source.get("messages", [])
+
+        retrieval_messages: list[str] = conversation.data_source.get(
+            "retrieval_messages", []
+        )
+        plot_history: list[dict] = conversation.data_source.get("plot_history", [])
+
+        retrieval_messages = sync_retrieval_n_message(messages, retrieval_messages)
+        state = conversation.data_source.get("state", {})
+
+        return {
+            "messages": messages,
+            "retrieval_messages": retrieval_messages,
+            "plot_history": plot_history,
+            "selected": selected,
+            "state": state,
+        }
 
     def chat_with_agent(
         self,
@@ -78,16 +143,88 @@ class ChatService:
                 selected_files=request.selected_files,
             )
 
-            history = [(request.message, "")]
+            result = self._select_conversation(conversation)
 
+            chat_history = result["messages"]
+
+            text, refs, plot = "", "", None
             try:
                 for response in pipeline.stream(
-                    request.message, conversation_id, history
+                    request.message, conversation_id, chat_history
                 ):
                     print(response)
+                    if not isinstance(response, Document):
+                        continue
+                    if response.channel is None:
+                        continue
+                    if response.channel == "chat":
+                        if response.content is None:
+                            text = ""
+                        else:
+                            text += response.content
+                    if response.channel == "info":
+                        if response.content is None:
+                            refs = ""
+                        else:
+                            refs += response.content
+                    if response.channel == "plot":
+                        plot = response.content
                     yield response.model_dump_json()
             except Exception as e:
                 raise e
+
+            if not text:
+                text = getattr(
+                    flowsettings,
+                    "KH_CHAT_EMPTY_MSG_PLACEHOLDER",
+                    "(Sorry, I don't know)",
+                )
+
+            chat_history = chat_history + [(request.message, text)]
+
+            self._persist_data_source(
+                session=session,
+                conversation=conversation,
+                user=user,
+                agent=agent,
+                retrieval_msg=refs,
+                messages=chat_history,
+                retrieval_history=result["retrieval_messages"],
+                plot_data=plot,
+                plot_history=result["plot_history"],
+                state={},
+            )
+
+    def _persist_data_source(
+        self,
+        session: Session,
+        conversation: Conversation,
+        user: User,
+        agent: Agent,
+        retrieval_msg,
+        plot_data,
+        retrieval_history,
+        plot_history,
+        messages,
+        state,
+    ):
+        retrieval_history = retrieval_history + [retrieval_msg]
+        plot_history = plot_history + [plot_data]
+
+        data_source = conversation.data_source
+
+        conversation.data_source = {
+            "selected": {},
+            "messages": messages,
+            "retrieval_messages": retrieval_history,
+            "plot_history": plot_history,
+            "state": state,
+            "likes": deepcopy(data_source.get("likes", [])),
+        }
+        session.add(conversation)
+        session.commit()
+
+        return retrieval_history, plot_history
 
     def _create_pipeline(
         self,
