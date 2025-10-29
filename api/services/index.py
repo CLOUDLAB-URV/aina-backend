@@ -1,6 +1,5 @@
 import shutil
 import tempfile
-from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -10,12 +9,12 @@ from ktem.db.models import Agent
 from ktem.index.base import BaseIndex
 from ktem.index.file.index import FileIndex
 from ktem.index.file.ui import FileIndexPage
-from ktem.settings import BaseSettingGroup
 from sqlmodel import Session
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import import_dotted_string
 
 from api.app import app
+from api.core.utils import populate_agent_settings
 from api.schemas.index import IndexInfo
 
 
@@ -128,12 +127,9 @@ class IndexService:
                 raise LookupError(f"Agent with id {agent_id} has no index assigned")
         index = self._get_file_index(index_id)
 
-        settings = deepcopy(app.default_settings)
-        settings.index.options[index.id] = BaseSettingGroup(
-            settings=index.get_user_settings()
+        settings = populate_agent_settings(
+            agent.settings or {}, index, agent.reasoning_id
         )
-        settings_flat = deepcopy(settings.flatten())
-        settings_flat.update(agent.settings or {})
 
         wrapper = get_wrapper(index)
 
@@ -152,7 +148,7 @@ class IndexService:
             index=index,
             files=file_paths,
             urls="",
-            settings=settings_flat,
+            settings=settings,
             user_id=user_id,
             reindex=reindex,
         )

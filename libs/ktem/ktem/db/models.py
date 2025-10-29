@@ -98,6 +98,9 @@ class Agent(_base_agent, table=True):  # type: ignore
 
     settings: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
 
+    reasoning_id: Optional[str] = Field(default=None)
+    lang: Optional[str] = Field(default=None)
+
 
 class Settings(_base_settings, table=True):  # type: ignore
     """Record of settings"""

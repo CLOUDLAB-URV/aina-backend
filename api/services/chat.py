@@ -5,10 +5,10 @@ from ktem.db.models import Agent, Conversation, User
 from ktem.index.base import BaseIndex
 from ktem.index.file.index import FileIndex
 from ktem.pages.agents.common import has_access
-from ktem.settings import BaseSettingGroup
 from sqlmodel import Session, select
 
 from api.app import app
+from api.core.utils import populate_agent_settings
 from api.schemas.chat import ChatRequest, SelectMode
 
 DEFAULT_SETTING = "(default)"
@@ -60,17 +60,14 @@ class ChatService:
                     f"to access conversation {conversation_id}"
                 )
 
-            settings = deepcopy(app.default_settings)
-            settings.index.options[index.id] = BaseSettingGroup(
-                settings=index.get_user_settings()
+            settings = populate_agent_settings(
+                agent.settings or {}, index, agent.reasoning_id
             )
-            settings_flat = deepcopy(settings.flatten())
-            settings_flat.update(agent.settings or {})
 
             pipeline, reasoning_state = self._create_pipeline(
                 agent=agent,
                 user_id=user_id,
-                settings=settings_flat,
+                settings=settings,
                 state=app.chat_state,
                 reasoning_type=request.reasoning_type,
                 llm_type=request.llm_type,

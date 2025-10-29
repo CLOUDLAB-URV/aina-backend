@@ -37,10 +37,9 @@ class AgentService:
                 raise ValueError(f"Agent with name {agent.name} already exists")
 
             new_agent = Agent(
-                name=agent.name,
-                description=agent.description,
                 creators=[user],
                 users=[user],
+                **agent.model_dump(),
             )
             session.add(new_agent)
             session.commit()
@@ -117,7 +116,9 @@ class AgentService:
             index = app.index_manager.info().get(agent.index_id)
             if index is None:
                 raise LookupError(f"Index with id {agent.index_id} not found")
-            return populate_agent_settings(agent.settings or {}, index, None)
+            return populate_agent_settings(
+                agent.settings or {}, index, agent.reasoning_id
+            )
 
     def update_agent_settings(
         self, user_id: str, agent_id: str, setting: dict[str, Any]

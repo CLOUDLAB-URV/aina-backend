@@ -13,6 +13,12 @@ class AgentBase(BaseModel):
     model_name: str | None = Field(
         default=None, description="The name of the model to be used by the agent"
     )
+    reasoning_id: str | None = Field(
+        default=None, description="The ID of the reasoning to be used by the agent"
+    )
+    lang: str | None = Field(
+        default=None, description="The language preference for the agent"
+    )
 
 
 class AgentUpdate(AgentBase):
