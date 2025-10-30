@@ -15,7 +15,7 @@ from theflow.utils.modules import import_dotted_string
 
 from api.app import app
 from api.core.utils import populate_agent_settings
-from api.schemas.index import IndexInfo
+from api.schemas.index import FileInfo, IndexInfo
 
 
 class IndexService:
@@ -94,7 +94,10 @@ class IndexService:
 
     def list_files(self, user_id: str, index_id: int, name_pattern: str = ""):
         index = self._get_file_index(index_id)
-        return get_wrapper(index).list_file(user_id, name_pattern)
+        _, df = get_wrapper(index).list_file(user_id, name_pattern)
+        records = df.to_dict(orient="records")
+        file_infos = [FileInfo(**r) for r in records]
+        return file_infos
 
     def list_groups(self, user_id: str, index_id: int):
         index = self._get_file_index(index_id)

@@ -9,3 +9,12 @@ class IndexCreate(BaseModel):
 
 class IndexInfo(IndexCreate):
     id: int = Field(description="The unique identifier of the index")
+
+
+class FileInfo(BaseModel):
+    id: str = Field(description="The unique identifier of the file")
+    name: str = Field(description="The name of the file")
+    size: str = Field(description="The size of the file")
+    tokens: str = Field(description="The number of tokens in the file")
+    loader: str = Field(description="The loader used for the file")
+    date_created: str = Field(description="The creation timestamp of the file")

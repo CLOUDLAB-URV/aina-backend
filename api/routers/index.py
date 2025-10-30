@@ -6,7 +6,7 @@ from sse_starlette import EventSourceResponse
 from api.core.dependencies import get_agent_creator_user, get_current_active_user
 from api.schemas.auth import UserInfo
 from api.schemas.exceptions import GenericException
-from api.schemas.index import IndexInfo
+from api.schemas.index import FileInfo, IndexInfo
 from api.services.index import IndexService
 
 router = APIRouter(
@@ -64,7 +64,7 @@ async def create_index(
     return service.create_index(name, config, index_type)
 
 
-@router.get("/index/{index_id}/files")
+@router.get("/index/{index_id}/files", response_model=list[FileInfo])
 async def list_files(
     index_id: int,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
