@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Any
 
 from ktem.db.engine import engine
 from ktem.db.models import Agent, Conversation, User
@@ -134,18 +135,12 @@ class ChatService:
                 user_id=user_id,
                 settings=settings,
                 state=app.chat_state,
-                reasoning_type=request.reasoning_type,
-                llm_type=request.llm_type,
-                use_mind_map=request.use_mind_map,
-                use_citation=request.use_citation,
-                language=request.language,
-                select_mode=request.select_mode,
-                selected_files=request.selected_files,
+                request=request,
             )
 
             result = self._select_conversation(conversation)
 
-            chat_history = result["messages"]
+            chat_history: list[tuple[str, str]] = result["messages"]
 
             text, refs, plot = "", "", None
             try:
@@ -193,6 +188,8 @@ class ChatService:
                 plot_data=plot,
                 plot_history=result["plot_history"],
                 state={},
+                select_mode=request.select_mode,
+                selected_files=request.selected_files,
             )
 
     def _persist_data_source(
@@ -201,20 +198,26 @@ class ChatService:
         conversation: Conversation,
         user: User,
         agent: Agent,
-        retrieval_msg,
+        retrieval_msg: str,
         plot_data,
-        retrieval_history,
+        retrieval_history: list[str],
         plot_history,
-        messages,
-        state,
+        messages: list[tuple[str, str]],
+        state: dict[str, Any],
+        select_mode: SelectMode,
+        selected_files: list[str],
     ):
         retrieval_history = retrieval_history + [retrieval_msg]
         plot_history = plot_history + [plot_data]
 
         data_source = conversation.data_source
 
+        selected = {
+            str(agent.index_id): [select_mode.value, selected_files, user.id],
+        }
+
         conversation.data_source = {
-            "selected": {},
+            "selected": selected,
             "messages": messages,
             "retrieval_messages": retrieval_history,
             "plot_history": plot_history,
@@ -232,14 +235,16 @@ class ChatService:
         user_id: str,
         settings: dict,
         state: dict,
-        reasoning_type: str | None = None,
-        llm_type: str | None = None,
-        use_mind_map: bool | None = None,
-        use_citation: bool | None = None,
-        language: str | None = None,
-        select_mode: SelectMode = SelectMode.ALL,
-        selected_files: list[str] = [],
+        request: ChatRequest,
     ):
+        reasoning_type = request.reasoning_type
+        llm_type = request.llm_type
+        use_mind_map = request.use_mind_map
+        use_citation = request.use_citation
+        language = request.language
+        select_mode = request.select_mode
+        selected_files = request.selected_files
+
         reasoning_mode = (
             settings["reasoning.use"]
             if reasoning_type in (DEFAULT_SETTING, None)
