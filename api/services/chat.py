@@ -4,6 +4,7 @@ from typing import Any
 from ktem.db.engine import engine
 from ktem.db.models import Agent, Conversation, User
 from ktem.index.base import BaseIndex
+from ktem.pages.chat.common import STATE
 from ktem.index.file.index import FileIndex
 from ktem.pages.agents.common import has_access
 from ktem.pages.chat.chat_suggestion import ChatSuggestion
@@ -83,7 +84,7 @@ class ChatService:
         plot_history: list[dict] = conversation.data_source.get("plot_history", [])
 
         retrieval_messages = sync_retrieval_n_message(messages, retrieval_messages)
-        state = conversation.data_source.get("state", {})
+        state = conversation.data_source.get("state", STATE)
 
         return {
             "messages": messages,
@@ -91,6 +92,7 @@ class ChatService:
             "plot_history": plot_history,
             "selected": selected,
             "state": state,
+            "likes": conversation.data_source.get("likes", []),
         }
 
     def chat_with_agent(
@@ -130,6 +132,14 @@ class ChatService:
                 agent.settings or {}, index, agent.reasoning_id
             )
 
+            result = self._select_conversation(conversation)
+            chat_history: list[tuple[str, str]] = result["messages"]
+            chat_state: dict[str, Any] = result["state"]
+
+            # if input is empty, assume regen mode
+            if not request.message:
+                chat_state["app"]["regen"] = True
+
             pipeline, reasoning_state = self._create_pipeline(
                 agent=agent,
                 user_id=user_id,
@@ -137,10 +147,6 @@ class ChatService:
                 state=app.chat_state,
                 request=request,
             )
-
-            result = self._select_conversation(conversation)
-
-            chat_history: list[tuple[str, str]] = result["messages"]
 
             text, refs, plot = "", "", None
             try:
@@ -164,6 +170,9 @@ class ChatService:
                             refs += response.content
                     if response.channel == "plot":
                         plot = response.content
+
+                    chat_state[pipeline.get_info()["id"]] = reasoning_state["pipeline"]
+
                     yield response.model_dump_json()
             except Exception as e:
                 raise e
@@ -187,7 +196,7 @@ class ChatService:
                 retrieval_history=result["retrieval_messages"],
                 plot_data=plot,
                 plot_history=result["plot_history"],
-                state={},
+                state=chat_state,
                 select_mode=request.select_mode,
                 selected_files=request.selected_files,
             )
@@ -207,8 +216,17 @@ class ChatService:
         select_mode: SelectMode,
         selected_files: list[str],
     ):
-        retrieval_history = retrieval_history + [retrieval_msg]
-        plot_history = plot_history + [plot_data]
+        # if not regen, then append the new message
+        if not state["app"].get("regen", False):
+            retrieval_history = retrieval_history + [retrieval_msg]
+            plot_history = plot_history + [plot_data]
+        else:
+            if retrieval_history:
+                retrieval_history[-1] = retrieval_msg
+                plot_history[-1] = plot_data
+
+        # reset regen state
+        state["app"]["regen"] = False
 
         data_source = conversation.data_source
 
