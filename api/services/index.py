@@ -9,7 +9,8 @@ from ktem.db.models import Agent
 from ktem.index.base import BaseIndex
 from ktem.index.file.index import FileIndex
 from ktem.index.file.ui import FileIndexPage
-from sqlmodel import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import import_dotted_string
 
@@ -113,6 +114,43 @@ class IndexService:
     def get_index_settings(self, index_id: int) -> dict[str, Any]:
         index = self._get_index(index_id)
         return index.get_user_settings()
+
+    def delete_file(self, user_id: str, index_id: int, file_id: str) -> str | None:
+        idx = self._get_file_index(index_id)
+        file_name = None
+        with Session(engine) as session:
+            source = session.execute(
+                select(idx._resources["Source"]).where(  # type: ignore
+                    idx._resources["Source"].id == file_id  # type: ignore
+                )
+            ).first()
+            if source:
+                file_name = source[0].name
+                session.delete(source[0])
+
+            vs_ids, ds_ids = [], []
+            index = session.execute(
+                select(idx._resources["Index"]).where(  # type: ignore
+                    idx._resources["Index"].source_id == file_id  # type: ignore
+                )
+            ).all()
+            for each in index:
+                if each[0].relation_type == "vector":
+                    vs_ids.append(each[0].target_id)
+                elif each[0].relation_type == "document":
+                    ds_ids.append(each[0].target_id)
+                session.delete(each[0])
+            session.commit()
+
+        if vs_ids:
+            idx._vs.delete(vs_ids)
+        idx._docstore.delete(ds_ids)
+
+        return file_name
+
+    def delete_all_files(self, user_id: str, index_id: int):
+        for file_info in self.list_files(user_id, index_id):
+            self.delete_file(user_id, index_id, file_info.id)
 
     def index_files(
         self,

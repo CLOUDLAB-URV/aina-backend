@@ -35,8 +35,17 @@ async def list_index_types(
     return service.list_index_types()
 
 
+@router.get("/admin_settings", response_model=dict[str, Any])
+async def get_admin_settings(
+    index_type: str,
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.get_admin_settings(index_type)
+
+
 @router.get(
-    "/index/{index_id}",
+    "/{index_id}",
     response_model=IndexInfo,
     dependencies=[Depends(get_agent_creator_user)],
 )
@@ -44,7 +53,7 @@ async def get_index(index_id: int, service: Annotated[IndexService, Depends()]):
     return service.get_index(index_id)
 
 
-@router.delete("/index/{index_id}", dependencies=[Depends(get_agent_creator_user)])
+@router.delete("/{index_id}", dependencies=[Depends(get_agent_creator_user)])
 async def delete_index(index_id: int, service: Annotated[IndexService, Depends()]):
     service.delete_index(index_id)
 
@@ -64,7 +73,27 @@ async def create_index(
     return service.create_index(name, config, index_type)
 
 
-@router.get("/index/{index_id}/files", response_model=list[FileInfo])
+@router.patch("/{index_id}")
+async def update_index(
+    index_id: int,
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    service: Annotated[IndexService, Depends()],
+    config: dict[str, Any] | None = None,
+    name: str | None = None,
+):
+    service.update_index(index_id, name, config)
+
+
+@router.get("/{index_id}/settings", response_model=dict[str, Any])
+async def get_index_settings(
+    index_id: int,
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.get_index_settings(index_id)
+
+
+@router.get("/{index_id}/files", response_model=list[FileInfo])
 async def list_files(
     index_id: int,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
@@ -74,7 +103,26 @@ async def list_files(
     return service.list_files(current_user.id, index_id, name_pattern)
 
 
-@router.get("/index/{index_id}/groups")
+@router.delete("/{index_id}/files", response_model=list[str | None])
+async def delete_all_files(
+    index_id: int,
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.delete_all_files(current_user.id, index_id)
+
+
+@router.delete("/{index_id}/files/{file_id}", response_model=str | None)
+async def delete_file(
+    index_id: int,
+    file_id: str,
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.delete_file(current_user.id, index_id, file_id)
+
+
+@router.get("/{index_id}/groups")
 async def list_groups(
     index_id: int,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
@@ -99,32 +147,3 @@ async def index_files(
             reindex,
         )
     )
-
-
-@router.patch("/index/{index_id}")
-async def update_index(
-    index_id: int,
-    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
-    service: Annotated[IndexService, Depends()],
-    config: dict[str, Any] | None = None,
-    name: str | None = None,
-):
-    service.update_index(index_id, name, config)
-
-
-@router.get("/admin_settings", response_model=dict[str, Any])
-async def get_admin_settings(
-    index_type: str,
-    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
-    service: Annotated[IndexService, Depends()],
-):
-    return service.get_admin_settings(index_type)
-
-
-@router.get("/index/{index_id}/settings", response_model=dict[str, Any])
-async def get_index_settings(
-    index_id: int,
-    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
-    service: Annotated[IndexService, Depends()],
-):
-    return service.get_index_settings(index_id)
