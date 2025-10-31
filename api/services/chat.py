@@ -39,7 +39,6 @@ class ChatService:
         conversation_id: str,
         user_id: str,
     ):
-        [[s] for s in ChatSuggestion.CHAT_SAMPLES]
         with Session(engine) as session:
             user = session.get(User, user_id)
             if user is None:
@@ -75,8 +74,12 @@ class ChatService:
         self,
         conversation: Conversation,
     ):
+        default_chat_suggestions = [[s] for s in ChatSuggestion.CHAT_SAMPLES]
+
         selected = conversation.data_source.get("selected", {})
         messages = conversation.data_source.get("messages", [])
+
+        chat_suggestions = conversation.data_source.get("chat_suggestions", default_chat_suggestions)
 
         retrieval_messages: list[str] = conversation.data_source.get(
             "retrieval_messages", []
@@ -88,6 +91,7 @@ class ChatService:
 
         return {
             "messages": messages,
+            "chat_suggestions": chat_suggestions,
             "retrieval_messages": retrieval_messages,
             "plot_history": plot_history,
             "selected": selected,
