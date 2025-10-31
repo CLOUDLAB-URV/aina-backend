@@ -79,7 +79,9 @@ class ChatService:
         selected = conversation.data_source.get("selected", {})
         messages = conversation.data_source.get("messages", [])
 
-        chat_suggestions = conversation.data_source.get("chat_suggestions", default_chat_suggestions)
+        chat_suggestions = conversation.data_source.get(
+            "chat_suggestions", default_chat_suggestions
+        )
 
         retrieval_messages: list[str] = conversation.data_source.get(
             "retrieval_messages", []
@@ -98,6 +100,59 @@ class ChatService:
             "state": state,
             "likes": conversation.data_source.get("likes", []),
         }
+
+    def like_message(
+        self,
+        agent_id: str,
+        conversation_id: str,
+        user_id: str,
+        message_index: int,
+        liked: bool | str = True,
+    ):
+        with Session(engine) as session:
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+
+            if not has_access(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access agent {agent_id}"
+                )
+
+            conversation = session.get(Conversation, conversation_id)
+            if conversation is None:
+                raise LookupError(f"Conversation with id {conversation_id} not found")
+            if conversation.user != user_id:
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access conversation {conversation_id}"
+                )
+            if conversation.agent_id != agent_id:
+                raise PermissionError(
+                    f"Conversation with id {conversation_id} is not associated "
+                    f"with agent {agent_id}"
+                )
+
+            data_source = deepcopy(conversation.data_source)
+
+            idx = [message_index, 1]  # second dimension is 1 (agent message)
+            _, message = data_source.get("messages", [])[message_index]
+
+            likes = data_source.get("likes", [])
+            likes.append([idx, message, liked])
+
+            data_source["likes"] = likes
+            conversation.data_source = data_source
+
+            session.add(conversation)
+            session.commit()
+
+            return likes
 
     def chat_with_agent(
         self,

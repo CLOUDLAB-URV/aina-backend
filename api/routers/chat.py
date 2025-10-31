@@ -46,3 +46,18 @@ async def select_conversation(
 ):
     """Select data sources for a specific conversation."""
     return service.select_conversation(agent_id, conversation_id, current_user.id)
+
+
+@router.post("/{agent_id}/{conversation_id}/like", response_model=dict)
+async def like_message(
+    agent_id: str,
+    conversation_id: str,
+    message_index: int,
+    service: Annotated[ChatService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+    liked: bool | str = True,
+):
+    """Like or dislike a message in a specific conversation."""
+    return service.like_message(
+        agent_id, conversation_id, current_user.id, message_index, liked
+    )
