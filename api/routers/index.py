@@ -6,7 +6,7 @@ from sse_starlette import EventSourceResponse
 from api.core.dependencies import get_agent_creator_user, get_current_active_user
 from api.schemas.auth import UserInfo
 from api.schemas.exceptions import GenericException
-from api.schemas.index import FileInfo, IndexInfo
+from api.schemas.index import FileInfo, GroupInfo, IndexInfo
 from api.services.index import IndexService
 
 router = APIRouter(
@@ -122,7 +122,7 @@ async def delete_file(
     return service.delete_file(current_user.id, index_id, file_id)
 
 
-@router.get("/{index_id}/groups")
+@router.get("/{index_id}/groups", response_model=list[GroupInfo])
 async def list_groups(
     index_id: int,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
