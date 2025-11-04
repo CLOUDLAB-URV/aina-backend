@@ -16,7 +16,7 @@ from theflow.utils.modules import import_dotted_string
 
 from api.app import app
 from api.core.utils import populate_agent_settings
-from api.schemas.index import FileInfo, IndexInfo
+from api.schemas.index import FileInfo, GroupInfo, IndexInfo
 
 
 class IndexService:
@@ -108,7 +108,8 @@ class IndexService:
         index = self._get_file_index(index_id)
         wrapper = get_wrapper(index)
         files, _ = wrapper.list_file(user_id)
-        return wrapper.list_group(user_id, files)
+        groups, _ = wrapper.list_group(user_id, files)
+        return [GroupInfo(**r) for r in groups]
 
     def create_group(
         self, user_id: str, index_id: int, group_name: str, file_ids: list[str]

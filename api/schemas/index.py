@@ -18,3 +18,10 @@ class FileInfo(BaseModel):
     tokens: str = Field(description="The number of tokens in the file")
     loader: str = Field(description="The loader used for the file")
     date_created: str = Field(description="The creation timestamp of the file")
+
+
+class GroupInfo(BaseModel):
+    id: str = Field(description="The unique identifier of the group")
+    name: str = Field(description="The name of the group")
+    files: list[str] = Field(description="List of file IDs in the group")
+    date_created: str = Field(description="The creation timestamp of the group")
