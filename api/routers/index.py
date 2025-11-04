@@ -66,11 +66,11 @@ async def delete_index(index_id: int, service: Annotated[IndexService, Depends()
 )
 async def create_index(
     name: str,
-    config: dict,
     index_type: str,
     service: Annotated[IndexService, Depends()],
+    config: dict[str, Any] | None = None,
 ):
-    return service.create_index(name, config, index_type)
+    return service.create_index(name, index_type, config)
 
 
 @router.patch("/{index_id}")

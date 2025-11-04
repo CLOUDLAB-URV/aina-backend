@@ -68,8 +68,12 @@ class IndexService:
     def delete_index(self, index_id: int):
         app.index_manager.delete_index(index_id)
 
-    def create_index(self, name: str, config: dict, index_type: str) -> IndexInfo:
+    def create_index(
+        self, name: str, index_type: str, config: dict[str, Any] | None = None
+    ) -> IndexInfo:
         index_type = self._get_qualname(index_type)
+        if config is None:
+            config = {}
         index = app.index_manager.build_index(name, config, index_type)
         app.index_manager.start_index(index.id, name, index.config, index_type)
         return self._get_info(index)
