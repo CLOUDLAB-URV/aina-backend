@@ -106,6 +106,57 @@ class IndexService:
         files, _ = wrapper.list_file(user_id)
         return wrapper.list_group(user_id, files)
 
+    def create_group(
+        self, user_id: str, index_id: int, group_name: str, file_ids: list[str]
+    ):
+        index = self._get_file_index(index_id)
+        FileGroup = index._resources["FileGroup"]
+        with Session(engine) as session:
+            current_group = (
+                session.query(FileGroup)
+                .filter_by(user=user_id, name=group_name)
+                .first()
+            )
+            if current_group:
+                raise ValueError(f"Group with name '{group_name}' already exists")
+            new_group = FileGroup(
+                name=group_name,
+                data={"files": file_ids},
+                user=user_id,
+            )
+            session.add(new_group)
+            session.commit()
+
+    def update_group(
+        self,
+        user_id: str,
+        index_id: int,
+        group_id: str,
+        group_name: str | None,
+        file_ids: list[str] | None,
+    ):
+        index = self._get_file_index(index_id)
+        FileGroup = index._resources["FileGroup"]
+        with Session(engine) as session:
+            current_group = session.get(FileGroup, group_id)
+            if not current_group:
+                raise LookupError(f"Group with id '{group_id}' not found")
+            current_group.name = group_name or current_group.name
+            if file_ids is not None:
+                current_group.data = {"files": file_ids}
+            session.add(current_group)
+            session.commit()
+
+    def delete_group(self, user_id: str, index_id: int, group_id: str):
+        index = self._get_file_index(index_id)
+        FileGroup = index._resources["FileGroup"]
+        with Session(engine) as session:
+            current_group = session.get(FileGroup, group_id)
+            if not current_group:
+                raise LookupError(f"Group with id '{group_id}' not found")
+            session.delete(current_group)
+            session.commit()
+
     def get_admin_settings(self, index_type: str) -> dict[str, Any]:
         index_type = self._get_qualname(index_type)
         index_cls: type[BaseIndex] = import_dotted_string(index_type, safe=False)

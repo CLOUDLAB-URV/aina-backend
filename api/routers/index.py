@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Body, Depends, UploadFile, status
 from sse_starlette import EventSourceResponse
 
 from api.core.dependencies import get_agent_creator_user, get_current_active_user
@@ -130,6 +130,39 @@ async def list_groups(
 ):
     return service.list_groups(current_user.id, index_id)
 
+
+@router.post("/{index_id}/groups")
+async def create_group(
+    index_id: int,
+    group_name: str,
+    file_ids: list[str],
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.create_group(current_user.id, index_id, group_name, file_ids)
+
+
+@router.patch("/{index_id}/groups/{group_id}")
+async def update_group(
+    index_id: int,
+    group_id: str,
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+    service: Annotated[IndexService, Depends()],
+    group_name: str | None = None,
+    file_ids: Annotated[list[str] | None, Body(embed=True)] = None,
+):
+    return service.update_group(
+        current_user.id, index_id, group_id, group_name, file_ids
+    )
+
+@router.delete("/{index_id}/groups/{group_id}")
+async def delete_group(
+    index_id: int,
+    group_id: str,
+    current_user: Annotated[UserInfo, Depends(get_current_active_user)],
+    service: Annotated[IndexService, Depends()],
+):
+    return service.delete_group(current_user.id, index_id, group_id)
 
 @router.post("/index", response_class=EventSourceResponse)
 async def index_files(
