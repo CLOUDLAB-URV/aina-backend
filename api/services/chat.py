@@ -190,8 +190,8 @@ class ChatService:
             )
 
             result = self._select_conversation(conversation)
-            chat_history: list[tuple[str, str]] = result["messages"]
-            chat_state: dict[str, Any] = result["state"]
+            chat_history: list[tuple[str, str]] = result.messages
+            chat_state: dict[str, Any] = result.state
 
             # if input is empty, assume regen mode
             if not request.message:
@@ -250,9 +250,9 @@ class ChatService:
                 agent=agent,
                 retrieval_msg=refs,
                 messages=chat_history,
-                retrieval_history=result["retrieval_messages"],
+                retrieval_history=result.retrieval_messages,
                 plot_data=plot,
-                plot_history=result["plot_history"],
+                plot_history=result.plot_history,
                 state=chat_state,
                 select_mode=request.select_mode,
                 selected_files=request.selected_files,
