@@ -113,13 +113,13 @@ class IndexService:
         FileGroup = index._resources["FileGroup"]
         with Session(engine) as session:
             current_group = (
-                session.query(FileGroup)
+                session.query(FileGroup)  # type: ignore
                 .filter_by(user=user_id, name=group_name)
                 .first()
             )
             if current_group:
                 raise ValueError(f"Group with name '{group_name}' already exists")
-            new_group = FileGroup(
+            new_group = FileGroup(  # type: ignore
                 name=group_name,
                 data={"files": file_ids},
                 user=user_id,
@@ -138,7 +138,7 @@ class IndexService:
         index = self._get_file_index(index_id)
         FileGroup = index._resources["FileGroup"]
         with Session(engine) as session:
-            current_group = session.get(FileGroup, group_id)
+            current_group = session.get(FileGroup, group_id)  # type: ignore
             if not current_group:
                 raise LookupError(f"Group with id '{group_id}' not found")
             current_group.name = group_name or current_group.name
@@ -151,7 +151,7 @@ class IndexService:
         index = self._get_file_index(index_id)
         FileGroup = index._resources["FileGroup"]
         with Session(engine) as session:
-            current_group = session.get(FileGroup, group_id)
+            current_group = session.get(FileGroup, group_id)  # type: ignore
             if not current_group:
                 raise LookupError(f"Group with id '{group_id}' not found")
             session.delete(current_group)

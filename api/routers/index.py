@@ -155,6 +155,7 @@ async def update_group(
         current_user.id, index_id, group_id, group_name, file_ids
     )
 
+
 @router.delete("/{index_id}/groups/{group_id}")
 async def delete_group(
     index_id: int,
@@ -163,6 +164,7 @@ async def delete_group(
     service: Annotated[IndexService, Depends()],
 ):
     return service.delete_group(current_user.id, index_id, group_id)
+
 
 @router.post("/index", response_class=EventSourceResponse)
 async def index_files(

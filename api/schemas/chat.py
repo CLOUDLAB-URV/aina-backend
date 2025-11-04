@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -27,4 +28,28 @@ class ChatRequest(BaseModel):
     )
     selected_files: list[str] = Field(
         default=[], description="List of selected files for indexing"
+    )
+
+
+class ConversationInfo(BaseModel):
+    messages: list[tuple[str, str]] = Field(
+        description="List of messages in the conversation as (human, agent) tuples",
+    )
+    chat_suggestions: list[list[str]] = Field(
+        description="List of chat suggestions for the user"
+    )
+    retrieval_messages: list[str] = Field(
+        description="List of retrieval messages used in the conversation",
+    )
+    plot_history: list[Any] = Field(
+        description="History of plots generated during the conversation",
+    )
+    selected: dict[str, Any] = Field(
+        description="List of files selected for the conversation",
+    )
+    state: dict[str, Any] = Field(
+        description="State information for the conversation",
+    )
+    likes: list[Any] = Field(
+        description="List of likes/dislikes for messages in the conversation",
     )

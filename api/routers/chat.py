@@ -5,7 +5,7 @@ from sse_starlette import EventSourceResponse
 
 from api.core.dependencies import get_current_active_user
 from api.schemas.auth import UserInfo
-from api.schemas.chat import ChatRequest
+from api.schemas.chat import ChatRequest, ConversationInfo
 from api.schemas.exceptions import GenericException
 from api.services.chat import ChatService
 
@@ -37,7 +37,7 @@ async def chat_with_agent(
     )
 
 
-@router.post("/{agent_id}/{conversation_id}/select")
+@router.post("/{agent_id}/{conversation_id}/select", response_model=ConversationInfo)
 async def select_conversation(
     agent_id: str,
     conversation_id: str,
@@ -48,7 +48,7 @@ async def select_conversation(
     return service.select_conversation(agent_id, conversation_id, current_user.id)
 
 
-@router.post("/{agent_id}/{conversation_id}/like", response_model=dict)
+@router.post("/{agent_id}/{conversation_id}/like")
 async def like_message(
     agent_id: str,
     conversation_id: str,

@@ -14,7 +14,7 @@ from theflow.settings import settings as flowsettings
 
 from api.app import app
 from api.core.utils import populate_agent_settings
-from api.schemas.chat import ChatRequest, SelectMode
+from api.schemas.chat import ChatRequest, ConversationInfo, SelectMode
 from kotaemon.base.schema import Document
 
 DEFAULT_SETTING = "(default)"
@@ -91,15 +91,15 @@ class ChatService:
         retrieval_messages = sync_retrieval_n_message(messages, retrieval_messages)
         state = conversation.data_source.get("state", STATE)
 
-        return {
-            "messages": messages,
-            "chat_suggestions": chat_suggestions,
-            "retrieval_messages": retrieval_messages,
-            "plot_history": plot_history,
-            "selected": selected,
-            "state": state,
-            "likes": conversation.data_source.get("likes", []),
-        }
+        return ConversationInfo(
+            messages=messages,
+            chat_suggestions=chat_suggestions,
+            retrieval_messages=retrieval_messages,
+            plot_history=plot_history,
+            selected=selected,
+            state=state,
+            likes=conversation.data_source.get("likes", []),
+        )
 
     def like_message(
         self,
@@ -151,8 +151,6 @@ class ChatService:
 
             session.add(conversation)
             session.commit()
-
-            return likes
 
     def chat_with_agent(
         self,
