@@ -1,4 +1,5 @@
 from ktem.index.manager import IndexManager
+from ktem.pages.resources.user import create_user
 from ktem.reasoning.base import BaseReasoning
 from ktem.settings import BaseSettingGroup, SettingGroup, SettingReasoningGroup
 from theflow.settings import settings
@@ -20,6 +21,8 @@ class App:
         )
         self._register_reasonings()
         self.initialize_indices()
+
+        self.init_user()
 
     def initialize_indices(self):
         """Create the index manager, start indices, and register to app settings"""
@@ -47,5 +50,15 @@ class App:
             #     settings=options
             # )
 
+    def init_user(self):
+        if hasattr(settings, "KH_FEATURE_USER_MANAGEMENT_ADMIN") and hasattr(
+            settings, "KH_FEATURE_USER_MANAGEMENT_PASSWORD"
+        ):
+            usn = settings.KH_FEATURE_USER_MANAGEMENT_ADMIN
+            pwd = settings.KH_FEATURE_USER_MANAGEMENT_PASSWORD
+
+            is_created = create_user(usn, pwd)
+            if is_created:
+                print(f"Created admin user: {usn}")
 
 app = App()
