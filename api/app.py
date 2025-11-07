@@ -61,4 +61,5 @@ class App:
             if is_created:
                 print(f"Created admin user: {usn}")
 
+
 app = App()
