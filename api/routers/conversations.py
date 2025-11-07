@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from api.core.dependencies import get_current_active_user
 from api.schemas.auth import UserInfo
@@ -24,11 +24,7 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "/{agent_id}",
-    response_model=list[ConversationInfo],
-    response_model_exclude={"data_source"},
-)
+@router.get("/{agent_id}", response_model=list[ConversationInfo])
 async def list_conversations(
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
     agent_id: str,
@@ -38,7 +34,7 @@ async def list_conversations(
     return service.list_conversations(current_user.id, agent_id)
 
 
-@router.post("/")
+@router.post("/", response_model=ConversationInfo, status_code=status.HTTP_201_CREATED)
 async def add_conversation(
     conversation: ConversationCreate,
     service: Annotated[ConversationService, Depends()],
@@ -58,7 +54,7 @@ async def delete_conversation(
     service.delete_conversation(current_user.id, conversation_id)
 
 
-@router.patch("/{conversation_id}")
+@router.patch("/{conversation_id}", response_model=ConversationInfo)
 async def update_conversation(
     conversation_id: str,
     conversation: ConversationUpdate,
