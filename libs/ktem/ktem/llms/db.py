@@ -1,13 +1,10 @@
-from typing import TYPE_CHECKING, Type
+from typing import Type
 
 from ktem.db.engine import engine
 from sqlalchemy import JSON, Column
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, SQLModel
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import import_dotted_string
-
-if TYPE_CHECKING:
-    from ktem.db.models import Agent
 
 
 class BaseLLMTable(SQLModel):
@@ -29,7 +26,6 @@ _base_llm: Type[BaseLLMTable] = (
 
 class LLMTable(_base_llm, table=True):  # type: ignore
     __tablename__ = "llm_table"
-    agents: list["Agent"] = Relationship(back_populates="model")
 
 
 if getattr(flowsettings, "KH_USE_DYNAMODB", False) and getattr(

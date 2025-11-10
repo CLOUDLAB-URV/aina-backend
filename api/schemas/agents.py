@@ -11,14 +11,8 @@ class AgentBase(BaseModel):
     index_id: int | None = Field(
         default=None, description="The ID of the index to be used by the agent"
     )
-    model_name: str | None = Field(
-        default=None, description="The name of the model to be used by the agent"
-    )
     reasoning_id: str | None = Field(
         default=None, description="The ID of the reasoning to be used by the agent"
-    )
-    lang: str | None = Field(
-        default=None, description="The language preference for the agent"
     )
 
 

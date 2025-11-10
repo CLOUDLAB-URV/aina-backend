@@ -3,7 +3,6 @@ from typing import Any, Optional
 import ktem.db.base_models as base_models
 from ktem.db.engine import engine
 from ktem.index.models import Index
-from ktem.llms.db import LLMTable
 from sqlalchemy.ext.mutable import MutableDict
 from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 from theflow.settings import settings
@@ -94,15 +93,9 @@ class Agent(_base_agent, table=True):  # type: ignore
     index_id: Optional[int] = Field(default=None, foreign_key="ktem__index.id")
     index: Optional["Index"] = Relationship(back_populates="agents")
 
-    model_name: Optional[str] = Field(default=None, foreign_key="llm_table.name")
-    model: Optional["LLMTable"] = Relationship(back_populates="agents")
-
     settings: dict[str, Any] = Field(
         default={}, sa_column=Column(MutableDict.as_mutable(JSON))
     )
-
-    reasoning_id: Optional[str] = Field(default=None)
-    lang: Optional[str] = Field(default=None)
 
 
 class Settings(_base_settings, table=True):  # type: ignore

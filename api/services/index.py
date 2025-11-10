@@ -224,9 +224,7 @@ class IndexService:
                 raise LookupError(f"Agent with id {agent_id} has no index assigned")
         index = self._get_file_index(index_id)
 
-        settings = populate_agent_settings(
-            agent.settings or {}, index, agent.reasoning_id
-        )
+        settings = populate_agent_settings(agent.settings or {}, index)
 
         wrapper = get_wrapper(index)
 

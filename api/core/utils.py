@@ -8,13 +8,14 @@ from api.app import app
 
 
 def populate_agent_settings(
-    overrides: dict[str, Any], index: BaseIndex, reasoning: str | None
+    overrides: dict[str, Any], index: BaseIndex
 ) -> dict[str, Any]:
     """Populate agent settings with default values where not overridden."""
     settings = deepcopy(app.default_settings)
     settings.index.options[index.id] = BaseSettingGroup(
         settings=index.get_user_settings()
     )
+    reasoning = overrides.get("reasoning.use")
     if not reasoning:
         reasoning = list(app.reasonings.keys())[0]
 

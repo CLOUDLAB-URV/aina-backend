@@ -185,9 +185,7 @@ class ChatService:
                     f"to access conversation {conversation_id}"
                 )
 
-            settings = populate_agent_settings(
-                agent.settings or {}, index, agent.reasoning_id
-            )
+            settings = populate_agent_settings(agent.settings or {}, index)
 
             result = self._select_conversation(conversation)
             chat_history: list[tuple[str, str]] = result.messages

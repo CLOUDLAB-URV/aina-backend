@@ -39,8 +39,12 @@ class AgentService:
             new_agent = Agent(
                 creators=[user],
                 users=[user],
-                **agent.model_dump(),
+                name=agent.name,
+                description=agent.description,
+                index_id=agent.index_id,
             )
+            if agent.reasoning_id:
+                new_agent.settings["reasoning.use"] = agent.reasoning_id
             session.add(new_agent)
             session.commit()
             session.refresh(new_agent)
@@ -174,9 +178,7 @@ class AgentService:
             index = app.index_manager.info().get(agent.index_id)
             if index is None:
                 raise LookupError(f"Index with id {agent.index_id} not found")
-            return populate_agent_settings(
-                agent.settings or {}, index, agent.reasoning_id
-            )
+            return populate_agent_settings(agent.settings or {}, index)
 
     def update_agent_settings(
         self, user_id: str, agent_id: str, settings: dict[str, Any]
@@ -230,7 +232,10 @@ class AgentService:
                     f"User with id {user_id} does not have permission "
                     f"to access reasoning settings for agent {agent_id}"
                 )
-            prefix = f"reasoning.options.{agent.reasoning_id or ''}."
+            reasoning = agent.settings.get("reasoning.use")
+            if not reasoning:
+                reasoning = list(app.reasonings.keys())[0]
+            prefix = f"reasoning.options.{reasoning}."
             stripped_settings = {}
             for key, value in agent.settings.items():
                 if key.startswith(prefix):
