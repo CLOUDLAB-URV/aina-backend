@@ -3,7 +3,12 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, status
 
 from api.core.dependencies import get_agent_creator_user, get_current_active_user
-from api.schemas.agents import AgentCreate, AgentResponse, AgentUpdate
+from api.schemas.agents import (
+    AgentCreate,
+    AgentResponse,
+    AgentUpdate,
+    AgentUsersAndCreatorsResponse,
+)
 from api.schemas.auth import UserInfo
 from api.schemas.exceptions import GenericException
 from api.services.agent import AgentService
@@ -69,6 +74,28 @@ async def update_agent(
 ):
     """Update an agent by ID."""
     return service.update_agent(current_user.id, agent_id, agent)
+
+
+@router.get("/{agent_id}/users", response_model=AgentUsersAndCreatorsResponse)
+async def get_agent_users_and_creators(
+    service: Annotated[AgentService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    agent_id: str,
+):
+    """Get users and creators for an agent by ID."""
+    return service.get_agent_users_and_creators(current_user.id, agent_id)
+
+
+@router.post("/{agent_id}/users", response_model=None)
+async def update_agent_users_and_creators(
+    service: Annotated[AgentService, Depends()],
+    current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
+    agent_id: str,
+    users: list[str],
+    creators: list[str],
+):
+    """Update users and creators for an agent by ID."""
+    service.update_agent_users_and_creators(current_user.id, agent_id, users, creators)
 
 
 @router.get("/settings/{agent_id}", response_model=dict[str, Any])

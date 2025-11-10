@@ -38,3 +38,10 @@ class AgentResponse(AgentCreate):
     date_created: datetime.datetime = Field(
         description="The date the agent was created"
     )
+
+
+class AgentUsersAndCreatorsResponse(BaseModel):
+    creators: list[str] = Field(
+        description="List of the usernames of creators associated with the agent"
+    )
+    users: list[str] = Field(description="List of usernames associated with the agent")

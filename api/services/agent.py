@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 
 from api.app import app
 from api.core.utils import populate_agent_settings
-from api.schemas.agents import AgentCreate, AgentUpdate
+from api.schemas.agents import AgentCreate, AgentUpdate, AgentUsersAndCreatorsResponse
 
 
 class AgentService:
@@ -82,6 +82,64 @@ class AgentService:
             session.commit()
             session.refresh(existing_agent)
             return existing_agent
+
+    def get_agent_users_and_creators(self, user_id: str, agent_id: str):
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            if not has_created(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to access users and creators for agent {agent_id}"
+                )
+            creators = [creator.username for creator in agent.creators]
+            users = [user.username for user in agent.users]
+            return AgentUsersAndCreatorsResponse(creators=creators, users=users)
+
+    def update_agent_users_and_creators(
+        self, user_id: str, agent_id: str, users: list[str], creators: list[str]
+    ):
+        with Session(engine) as session:
+            agent = session.get(Agent, agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {agent_id} not found")
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            if not has_created(user, agent):
+                raise PermissionError(
+                    f"User with id {user_id} does not have permission "
+                    f"to update users and creators for agent {agent_id}"
+                )
+
+            new_creators = []
+            for creator_username in creators:
+                creator = session.exec(
+                    select(User).where(User.username == creator_username)
+                ).first()
+                if creator is None:
+                    raise LookupError(
+                        f"Creator with username {creator_username} not found"
+                    )
+                new_creators.append(creator)
+            agent.creators = new_creators
+
+            new_users = []
+            for user_username in users:
+                accessible_user = session.exec(
+                    select(User).where(User.username == user_username)
+                ).first()
+                if accessible_user is None:
+                    raise LookupError(f"User with username {user_username} not found")
+                new_users.append(accessible_user)
+            agent.users = new_users
+
+            session.add(agent)
+            session.commit()
 
     def get_agent_settings(self, user_id: str, agent_id: str) -> dict[str, Any]:
         with Session(engine) as session:
