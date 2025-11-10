@@ -210,7 +210,6 @@ class ChatService:
                 for response in pipeline.stream(
                     request.message, conversation_id, chat_history
                 ):
-                    print(response)
                     if not isinstance(response, Document):
                         continue
                     if response.channel is None:
