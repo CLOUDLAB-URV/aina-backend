@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -23,6 +24,9 @@ class AgentBase(BaseModel):
 
 class AgentUpdate(AgentBase):
     name: str | None = Field(default=None, description="The name of the agent")
+    settings: dict[str, Any] | None = Field(
+        default=None, description="The settings of the agent"
+    )
 
 
 class AgentCreate(AgentBase):

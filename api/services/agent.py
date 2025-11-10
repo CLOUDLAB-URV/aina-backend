@@ -121,7 +121,7 @@ class AgentService:
             )
 
     def update_agent_settings(
-        self, user_id: str, agent_id: str, setting: dict[str, Any]
+        self, user_id: str, agent_id: str, settings: dict[str, Any]
     ):
         with Session(engine) as session:
             agent = session.get(Agent, agent_id)
@@ -135,7 +135,7 @@ class AgentService:
                     f"User with id {user_id} does not have permission "
                     f"to update settings for agent {agent_id}"
                 )
-            agent.settings.update(setting)
+            agent.settings.update(settings)
             session.add(agent)
             session.commit()
 
