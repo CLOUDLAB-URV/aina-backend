@@ -18,7 +18,7 @@ class BaseRerankingTable(Base):
 
     name = Column(String, primary_key=True, unique=True)
     spec = Column(JSON, default={})
-    default = Column(Boolean, default=False)
+    is_default = Column(Boolean, default=False)
 
 
 __base_reranking: Type[BaseRerankingTable] = (
@@ -31,6 +31,14 @@ __base_reranking: Type[BaseRerankingTable] = (
 class RerankingTable(__base_reranking):  # type: ignore
     __tablename__ = "reranking"
 
+
+if getattr(flowsettings, "KH_USE_DYNAMODB", False) and getattr(
+    flowsettings, "KH_MANAGE_DYNAMODB_TABLES", False
+):
+    from ktem.db.dynamodb import DynamoDBTableManager
+
+    table_manager = DynamoDBTableManager()
+    table_manager.create_table_from_sqlalchemy(RerankingTable, wait=False)
 
 if not getattr(flowsettings, "KH_ENABLE_ALEMBIC", False):
     RerankingTable.metadata.create_all(engine)

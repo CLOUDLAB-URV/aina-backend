@@ -46,9 +46,9 @@ class RerankingManager:
                 self._info[item.name] = {
                     "name": item.name,
                     "spec": item.spec,
-                    "default": item.default,
+                    "default": item.is_default,
                 }
-                if item.default:
+                if item.is_default:
                     self._default = item.name
 
     def load_vendors(self):
@@ -143,10 +143,10 @@ class RerankingManager:
             with Session(engine) as sess:
                 if default:
                     # turn all models to non-default
-                    sess.query(RerankingTable).update({"default": False})
+                    sess.query(RerankingTable).update({"is_default": False})
                     sess.commit()
 
-                item = RerankingTable(name=name, spec=spec, default=default)
+                item = RerankingTable(name=name, spec=spec, is_default=default)
                 sess.add(item)
                 sess.commit()
         except Exception as e:
@@ -173,7 +173,6 @@ class RerankingManager:
 
         try:
             with Session(engine) as sess:
-
                 if default:
                     # turn all models to non-default
                     sess.query(RerankingTable).update({"default": False})
@@ -183,7 +182,7 @@ class RerankingManager:
                 if not item:
                     raise ValueError(f"Model {name} not found")
                 item.spec = spec
-                item.default = default
+                item.is_default = default
                 sess.commit()
         except Exception as e:
             raise ValueError(f"Failed to update model {name}: {e}")

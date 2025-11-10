@@ -82,7 +82,40 @@ KH_FEATURE_USER_MANAGEMENT_PASSWORD = str(
     config("KH_FEATURE_USER_MANAGEMENT_PASSWORD", default="admin")
 )
 KH_ENABLE_ALEMBIC = False
+KH_USE_DYNAMODB = config("KH_USE_DYNAMODB", default=False, cast=bool)
+KH_MANAGE_DYNAMODB_TABLES = config(
+    "KH_MANAGE_DYNAMODB_TABLES", default=False, cast=bool
+)
 KH_DATABASE = f"sqlite:///{KH_USER_DATA_DIR / 'sql.db'}"
+
+if KH_USE_DYNAMODB:
+    import importlib.util
+
+    import boto3
+
+    if importlib.util.find_spec("pydynamodb") is None:
+        raise ImportError(
+            "pydynamodb is required for DynamoDB support. "
+            "Please install it via 'pip install pydynamodb'."
+        )
+
+    session = boto3.Session()
+    credentials = session.get_credentials()
+    if not credentials:
+        raise ValueError("Cannot get AWS credentials for DynamoDB.")
+    aws_access_key_id = credentials.access_key
+    aws_secret_access_key = credentials.secret_key
+    region_name = session.region_name
+
+    KH_DATABASE = (
+        "dynamodb://{aws_access_key_id}:{aws_secret_access_key}"
+        "@dynamodb.{region_name}.amazonaws.com:443"
+    ).format(
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        region_name=region_name,
+    )
+
 KH_FILESTORAGE_PATH = str(KH_USER_DATA_DIR / "files")
 KH_WEB_SEARCH_BACKEND = (
     "kotaemon.indices.retrievers.tavily_web_search.WebSearch"

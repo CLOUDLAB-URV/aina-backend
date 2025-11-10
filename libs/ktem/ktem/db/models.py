@@ -8,31 +8,31 @@ from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 from theflow.settings import settings
 from theflow.utils.modules import import_dotted_string
 
-_base_conv = (
+_base_conv: type[base_models.BaseConversation] = (
     import_dotted_string(settings.KH_TABLE_CONV, safe=False)
     if hasattr(settings, "KH_TABLE_CONV")
     else base_models.BaseConversation
 )
 
-_base_user = (
+_base_user: type[base_models.BaseUser] = (
     import_dotted_string(settings.KH_TABLE_USER, safe=False)
     if hasattr(settings, "KH_TABLE_USER")
     else base_models.BaseUser
 )
 
-_base_agent = (
+_base_agent: type[base_models.BaseAgent] = (
     import_dotted_string(settings.KH_TABLE_AGENT, safe=False)
     if hasattr(settings, "KH_TABLE_AGENT")
     else base_models.BaseAgent
 )
 
-_base_settings = (
+_base_settings: type[base_models.BaseSettings] = (
     import_dotted_string(settings.KH_TABLE_SETTINGS, safe=False)
     if hasattr(settings, "KH_TABLE_SETTINGS")
     else base_models.BaseSettings
 )
 
-_base_issue_report = (
+_base_issue_report: type[base_models.BaseIssueReport] = (
     import_dotted_string(settings.KH_TABLE_ISSUE_REPORT, safe=False)
     if hasattr(settings, "KH_TABLE_ISSUE_REPORT")
     else base_models.BaseIssueReport
@@ -109,6 +109,25 @@ class Settings(_base_settings, table=True):  # type: ignore
 class IssueReport(_base_issue_report, table=True):  # type: ignore
     """Record of issues"""
 
+
+if getattr(settings, "KH_USE_DYNAMODB", False) and getattr(
+    settings, "KH_MANAGE_DYNAMODB_TABLES", False
+):
+    from ktem.db.dynamodb import DynamoDBTableManager
+
+    table_manager = DynamoDBTableManager()
+    table_manager.create_tables_from_sqlalchemy(
+        [
+            Conversation,
+            User,
+            Agent,
+            Settings,
+            IssueReport,
+            UserAgentAccessible,
+            UserAgentCreated,
+        ],
+        wait=False,
+    )
 
 if not getattr(settings, "KH_ENABLE_ALEMBIC", False):
     SQLModel.metadata.create_all(engine)

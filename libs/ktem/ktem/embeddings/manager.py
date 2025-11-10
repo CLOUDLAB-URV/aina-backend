@@ -46,9 +46,9 @@ class EmbeddingManager:
                 self._info[item.name] = {
                     "name": item.name,
                     "spec": item.spec,
-                    "default": item.default,
+                    "default": item.is_default,
                 }
-                if item.default:
+                if item.is_default:
                     self._default = item.name
                     self._models["default"] = self._models[item.name]
 
@@ -161,10 +161,10 @@ class EmbeddingManager:
             with Session(engine) as sess:
                 if default:
                     # turn all models to non-default
-                    sess.query(EmbeddingTable).update({"default": False})
+                    sess.query(EmbeddingTable).update({"is_default": False})
                     sess.commit()
 
-                item = EmbeddingTable(name=name, spec=spec, default=default)
+                item = EmbeddingTable(name=name, spec=spec, is_default=default)
                 sess.add(item)
                 sess.commit()
         except Exception as e:
@@ -191,17 +191,16 @@ class EmbeddingManager:
 
         try:
             with Session(engine) as sess:
-
                 if default:
                     # turn all models to non-default
-                    sess.query(EmbeddingTable).update({"default": False})
+                    sess.query(EmbeddingTable).update({"is_default": False})
                     sess.commit()
 
                 item = sess.query(EmbeddingTable).filter_by(name=name).first()
                 if not item:
                     raise ValueError(f"Model {name} not found")
                 item.spec = spec
-                item.default = default
+                item.is_default = default
                 sess.commit()
         except Exception as e:
             raise ValueError(f"Failed to update model {name}: {e}")

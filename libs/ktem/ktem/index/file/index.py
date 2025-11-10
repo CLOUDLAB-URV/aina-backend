@@ -326,6 +326,20 @@ class FileIndex(BaseIndex):
 
         # create the resources
         self._setup_resources()
+        if getattr(flowsettings, "KH_ENABLE_DYNAMODB", False) and getattr(
+            flowsettings, "KH_MANAGE_DYNAMODB_TABLES", False
+        ):
+            from ktem.db.dynamodb import DynamoDBTableManager
+
+            table_manager = DynamoDBTableManager()
+            table_manager.create_tables_from_sqlalchemy(
+                [
+                    self._resources["Source"],  # type: ignore
+                    self._resources["Index"],  # type: ignore
+                    self._resources["FileGroup"],  # type: ignore
+                ],
+                wait=False,
+            )
         self._resources["Source"].metadata.create_all(engine)  # type: ignore
         self._resources["Index"].metadata.create_all(engine)  # type: ignore
         self._resources["FileGroup"].metadata.create_all(engine)  # type: ignore
@@ -336,6 +350,20 @@ class FileIndex(BaseIndex):
         import shutil
 
         self._setup_resources()
+        if getattr(flowsettings, "KH_ENABLE_DYNAMODB", False) and getattr(
+            flowsettings, "KH_MANAGE_DYNAMODB_TABLES", False
+        ):
+            from ktem.db.dynamodb import DynamoDBTableManager
+
+            table_manager = DynamoDBTableManager()
+            table_manager.drop_tables_from_sqlalchemy(
+                [
+                    self._resources["Source"],  # type: ignore
+                    self._resources["Index"],  # type: ignore
+                    self._resources["FileGroup"],  # type: ignore
+                ],
+                wait=False,
+            )
         self._resources["Source"].__table__.drop(engine)  # type: ignore
         self._resources["Index"].__table__.drop(engine)  # type: ignore
         self._resources["FileGroup"].__table__.drop(engine)  # type: ignore

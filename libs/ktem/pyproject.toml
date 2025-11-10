@@ -25,6 +25,7 @@ dependencies = [
     "python-decouple>=3.8,<4",
     "SQLAlchemy>=2.0.29,<3",
     "sqlmodel>=0.0.16,<0.1",
+    "pydynamodb>=0.7.4,<1",
     "tiktoken>=0.6.0,<1",
     "gradio==5.35.0",
     "gradiologin",

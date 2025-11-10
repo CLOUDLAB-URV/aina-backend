@@ -28,7 +28,7 @@ class LLMManager:
                         item = LLMTable(
                             name=name,
                             spec=model["spec"],
-                            default=model.get("default", False),
+                            is_default=model.get("default", False),
                         )
                         session.add(item)
                         session.commit()
@@ -49,9 +49,9 @@ class LLMManager:
                     self._info[item.name] = {
                         "name": item.name,
                         "spec": item.spec,
-                        "default": item.default,
+                        "default": item.is_default,
                     }
-                    if item.default:
+                    if item.is_default:
                         self._default = item.name
                 except Exception as e:
                     print(f"Failed to load model {item.name}: {e}")
@@ -172,13 +172,12 @@ class LLMManager:
 
         try:
             with Session(engine) as session:
-
                 if default:
                     # turn all models to non-default
-                    session.query(LLMTable).update({"default": False})
+                    session.query(LLMTable).update({"is_default": False})
                     session.commit()
 
-                item = LLMTable(name=name, spec=spec, default=default)
+                item = LLMTable(name=name, spec=spec, is_default=default)
                 session.add(item)
                 session.commit()
         except Exception as e:
@@ -205,17 +204,16 @@ class LLMManager:
 
         try:
             with Session(engine) as session:
-
                 if default:
                     # turn all models to non-default
-                    session.query(LLMTable).update({"default": False})
+                    session.query(LLMTable).update({"is_default": False})
                     session.commit()
 
                 item = session.query(LLMTable).filter_by(name=name).first()
                 if not item:
                     raise ValueError(f"Model {name} not found")
                 item.spec = spec
-                item.default = default
+                item.is_default = default
                 session.commit()
         except Exception as e:
             raise ValueError(f"Failed to update model {name}: {e}")
