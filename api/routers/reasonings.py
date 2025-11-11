@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 
@@ -23,8 +23,13 @@ async def list_reasonings(service: Annotated[ReasoningService, Depends()]):
     return service.list_reasonings()
 
 
-@router.get("/{reasoning_name}/config", response_model=dict)
+@router.get("/{reasoning_name}/config", response_model=dict[str, Any])
 async def get_reasoning_config(
     reasoning_name: str, service: Annotated[ReasoningService, Depends()]
 ):
     return service.get_reasoning_config(reasoning_name)
+
+
+@router.get("/settings", response_model=dict[str, Any])
+async def get_reasoning_app_settings(service: Annotated[ReasoningService, Depends()]):
+    return service.get_reasoning_app_settings()

@@ -12,3 +12,6 @@ class ReasoningService:
         if reasoning_name not in app.reasonings:
             raise LookupError(f"Reasoning '{reasoning_name}' not found")
         return app.reasonings[reasoning_name].get_user_settings()
+
+    def get_reasoning_app_settings(self):
+        return app.default_settings.reasoning.model_dump()
