@@ -18,7 +18,6 @@ filestorage_path = Path(settings.KH_FILESTORAGE_PATH)
 filestorage_path.mkdir(parents=True, exist_ok=True)
 
 
-@cache
 def get_docstore(collection_name: str = "default") -> BaseDocumentStore:
     from copy import deepcopy
 
@@ -27,7 +26,6 @@ def get_docstore(collection_name: str = "default") -> BaseDocumentStore:
     return deserialize(ds_conf, safe=False)
 
 
-@cache
 def get_vectorstore(collection_name: str = "default") -> BaseVectorStore:
     from copy import deepcopy
 
