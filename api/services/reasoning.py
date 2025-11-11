@@ -14,4 +14,8 @@ class ReasoningService:
         return app.reasonings[reasoning_name].get_user_settings()
 
     def get_reasoning_app_settings(self):
-        return app.default_settings.reasoning.model_dump()
+        return {
+            k: app.default_settings.reasoning.settings[k].model_dump(exclude_unset=True)
+            for k in app.default_settings.reasoning.settings
+        }
+    
