@@ -18,4 +18,3 @@ class ReasoningService:
             k: app.default_settings.reasoning.settings[k].model_dump(exclude_unset=True)
             for k in app.default_settings.reasoning.settings
         }
-    
