@@ -41,6 +41,7 @@ from kotaemon.indices.ingests.files import (
     adobe_reader,
     azure_reader,
     docling_reader,
+    pdf_thumbnail_reader,
     unstructured,
     web_reader,
 )
@@ -686,6 +687,8 @@ class IndexDocumentPipeline(BaseFileIndexIndexing):
             readers[".pdf"] = azure_reader
         elif self.reader_mode == "docling":
             readers[".pdf"] = docling_reader
+        elif self.reader_mode == "pdf-thumbnail":
+            readers[".pdf"] = pdf_thumbnail_reader
 
         dev_readers, _, _ = dev_settings()
         readers.update(dev_readers)
@@ -700,6 +703,7 @@ class IndexDocumentPipeline(BaseFileIndexIndexing):
                 "value": "default",
                 "choices": [
                     ("Default (open-source)", "default"),
+                    ("Default with thumbnails (open-source)", "pdf-thumbnail"),
                     ("Adobe API (figure+table extraction)", "adobe"),
                     (
                         "Azure AI Document Intelligence (figure+table extraction)",
