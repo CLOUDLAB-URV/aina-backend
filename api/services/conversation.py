@@ -1,5 +1,6 @@
 from ktem.db.engine import engine
 from ktem.db.models import Agent, Conversation, User
+from ktem.pages.agents.common import has_access
 from sqlmodel import Session, or_, select
 from theflow.settings import settings as flowsettings
 
@@ -65,11 +66,12 @@ class ConversationService:
             agent = session.get(Agent, conversation.agent_id)
             if agent is None:
                 raise LookupError(f"Agent with id {conversation.agent_id} not found")
-            if user not in agent.users:
+            if not has_access(user, agent):
                 raise PermissionError(
                     f"User with id {user_id} does not have permission "
-                    f"to use agent {conversation.agent_id}"
+                    f"to add conversation to agent {conversation.agent_id}"
                 )
+
             new_conversation = Conversation.model_validate(conversation)
             new_conversation.user = user_id
             session.add(new_conversation)
@@ -79,13 +81,20 @@ class ConversationService:
 
     def delete_conversation(self, user_id: str, conversation_id: str) -> None:
         with Session(engine) as session:
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
             conversation = session.get(Conversation, conversation_id)
             if conversation is None:
                 raise LookupError(f"Conversation with id {conversation_id} not found")
-            if conversation.user != user_id:
+            agent = session.get(Agent, conversation.agent_id)
+            if agent is None:
+                raise LookupError(f"Agent with id {conversation.agent_id} not found")
+            if not has_access(user, agent):
                 raise PermissionError(
                     f"User with id {user_id} does not have permission "
-                    f"to delete conversation {conversation_id}"
+                    f"to delete conversation {conversation_id} "
+                    f"of agent {conversation.agent_id}"
                 )
 
             session.delete(conversation)
@@ -98,10 +107,19 @@ class ConversationService:
             existing_conversation = session.get(Conversation, conversation_id)
             if existing_conversation is None:
                 raise LookupError(f"Conversation with id {conversation_id} not found")
-            if existing_conversation.user != user_id:
+            user = session.get(User, user_id)
+            if user is None:
+                raise LookupError(f"User with id {user_id} not found")
+            agent = session.get(Agent, existing_conversation.agent_id)
+            if agent is None:
+                raise LookupError(
+                    f"Agent with id {existing_conversation.agent_id} not found"
+                )
+            if not has_access(user, agent):
                 raise PermissionError(
                     f"User with id {user_id} does not have permission "
-                    f"to update conversation {conversation_id}"
+                    f"to update conversation {conversation_id} "
+                    f"of agent {existing_conversation.agent_id}"
                 )
 
             update_data = conversation.model_dump(exclude_unset=True)
