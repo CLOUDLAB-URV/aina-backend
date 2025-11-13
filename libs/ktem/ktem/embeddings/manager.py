@@ -21,15 +21,18 @@ class EmbeddingManager:
 
         # populate the pool if empty
         if hasattr(flowsettings, "KH_EMBEDDINGS"):
-            with Session(engine) as sess:
-                count = sess.query(EmbeddingTable).count()
-            if not count:
-                for name, model in flowsettings.KH_EMBEDDINGS.items():
-                    self.add(
-                        name=name,
-                        spec=model["spec"],
-                        default=model.get("default", False),
-                    )
+            for name, model in flowsettings.KH_EMBEDDINGS.items():
+                with Session(engine) as session:
+                    stmt = select(EmbeddingTable).where(EmbeddingTable.name == name)
+                    result = session.execute(stmt)
+                    if not result.first():
+                        item = EmbeddingTable(
+                            name=name,
+                            spec=model["spec"],
+                            is_default=model.get("default", False),
+                        )
+                        session.add(item)
+                        session.commit()
 
         self.load()
         self.load_vendors()
@@ -42,15 +45,19 @@ class EmbeddingManager:
             items = sess.execute(stmt)
 
             for (item,) in items:
-                self._models[item.name] = deserialize(item.spec, safe=False)
-                self._info[item.name] = {
-                    "name": item.name,
-                    "spec": item.spec,
-                    "default": item.is_default,
-                }
-                if item.is_default:
-                    self._default = item.name
-                    self._models["default"] = self._models[item.name]
+                try:
+                    self._models[item.name] = deserialize(item.spec, safe=False)
+                    self._info[item.name] = {
+                        "name": item.name,
+                        "spec": item.spec,
+                        "default": item.is_default,
+                    }
+                    if item.is_default:
+                        self._default = item.name
+                        self._models["default"] = self._models[item.name]
+                except Exception as e:
+                    print(f"Failed to load model {item.name}: {e}")
+                    continue
 
     def load_vendors(self):
         from kotaemon.embeddings import (

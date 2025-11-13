@@ -21,15 +21,18 @@ class RerankingManager:
 
         # populate the pool if empty
         if hasattr(flowsettings, "KH_RERANKINGS"):
-            with Session(engine) as sess:
-                count = sess.query(RerankingTable).count()
-            if not count:
-                for name, model in flowsettings.KH_RERANKINGS.items():
-                    self.add(
-                        name=name,
-                        spec=model["spec"],
-                        default=model.get("default", False),
-                    )
+            for name, model in flowsettings.KH_RERANKINGS.items():
+                with Session(engine) as session:
+                    stmt = select(RerankingTable).where(RerankingTable.name == name)
+                    result = session.execute(stmt)
+                    if not result.first():
+                        item = RerankingTable(
+                            name=name,
+                            spec=model["spec"],
+                            is_default=model.get("default", False),
+                        )
+                        session.add(item)
+                        session.commit()
 
         self.load()
         self.load_vendors()
@@ -42,14 +45,18 @@ class RerankingManager:
             items = sess.execute(stmt)
 
             for (item,) in items:
-                self._models[item.name] = deserialize(item.spec, safe=False)
-                self._info[item.name] = {
-                    "name": item.name,
-                    "spec": item.spec,
-                    "default": item.is_default,
-                }
-                if item.is_default:
-                    self._default = item.name
+                try:
+                    self._models[item.name] = deserialize(item.spec, safe=False)
+                    self._info[item.name] = {
+                        "name": item.name,
+                        "spec": item.spec,
+                        "default": item.is_default,
+                    }
+                    if item.is_default:
+                        self._default = item.name
+                except Exception as e:
+                    print(f"Failed to load model {item.name}: {e}")
+                    continue
 
     def load_vendors(self):
         from kotaemon.rerankings import (
