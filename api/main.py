@@ -1,43 +1,33 @@
-import uvicorn
-from fastapi import FastAPI, Request, Depends, HTTPException, Security
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse
 
 from api.core.config import settings
-from api.routers import agents, auth, conversations, embeddings, llms, rerankings, chat, index, reasonings
-
-# Definición del esquema de seguridad (no implementa la validación, solo define cómo se envía el token)
-security = HTTPBearer()
+from api.routers import (
+    agents,
+    auth,
+    chat,
+    conversations,
+    embeddings,
+    index,
+    llms,
+    reasonings,
+    rerankings,
+)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
-# 2. Configuración de CORS
-# ************ CORRECCIÓN IMPORTANTE ************
-# Se usa el comodín "*" para desarrollo en LAN, ya que las IPs dinámicas no están en la lista.
-origins = [
-    "*",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Now restricted to the list above
+    allow_origins="*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-# Fin de la configuración de CORS
 
 @app.exception_handler(PermissionError)
 async def permission_error_exception_handler(request: Request, exc: PermissionError):
