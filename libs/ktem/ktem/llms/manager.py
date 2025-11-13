@@ -61,23 +61,29 @@ class LLMManager:
         from kotaemon.llms import (
             AzureChatOpenAI,
             ChatOpenAI,
+            EndpointChatLLM,
             LCAnthropicChat,
+            LCAzureChatOpenAI,
             LCChatOpenAI,
             LCCohereChat,
             LCGeminiChat,
             LCOllamaChat,
             LlamaCppChat,
+            StructuredOutputChatOpenAI,
         )
 
         self._vendors = [
-            ChatOpenAI,
             AzureChatOpenAI,
+            ChatOpenAI,
+            EndpointChatLLM,
             LCAnthropicChat,
-            LCGeminiChat,
+            LCAzureChatOpenAI,
+            LCChatOpenAI,
             LCCohereChat,
+            LCGeminiChat,
             LCOllamaChat,
             LlamaCppChat,
-            LCChatOpenAI,
+            StructuredOutputChatOpenAI,
         ]
 
         for extra_vendor in getattr(flowsettings, "KH_LLM_EXTRA_VENDORS", []):

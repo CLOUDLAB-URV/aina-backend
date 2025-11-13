@@ -62,11 +62,14 @@ class EmbeddingManager:
     def load_vendors(self):
         from kotaemon.embeddings import (
             AzureOpenAIEmbeddings,
+            EndpointEmbeddings,
             FastEmbedEmbeddings,
+            LCAzureOpenAIEmbeddings,
             LCCohereEmbeddings,
             LCGoogleEmbeddings,
             LCHuggingFaceEmbeddings,
             LCMistralEmbeddings,
+            LCOpenAIEmbeddings,
             OpenAIEmbeddings,
             TeiEndpointEmbeddings,
             VoyageAIEmbeddings,
@@ -74,12 +77,15 @@ class EmbeddingManager:
 
         self._vendors = [
             AzureOpenAIEmbeddings,
-            OpenAIEmbeddings,
+            EndpointEmbeddings,
             FastEmbedEmbeddings,
+            LCAzureOpenAIEmbeddings,
             LCCohereEmbeddings,
-            LCHuggingFaceEmbeddings,
             LCGoogleEmbeddings,
+            LCHuggingFaceEmbeddings,
             LCMistralEmbeddings,
+            LCOpenAIEmbeddings,
+            OpenAIEmbeddings,
             TeiEndpointEmbeddings,
             VoyageAIEmbeddings,
         ]
