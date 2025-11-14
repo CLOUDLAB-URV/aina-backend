@@ -8,7 +8,7 @@ class AgentBase(BaseModel):
     description: str | None = Field(
         default=None, description="The description of the agent"
     )
-    index_id: int | None = Field(
+    index_id: str | None = Field(
         default=None, description="The ID of the index to be used by the agent"
     )
     reasoning_id: str | None = Field(

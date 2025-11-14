@@ -49,12 +49,12 @@ async def get_admin_settings(
     response_model=IndexInfo,
     dependencies=[Depends(get_agent_creator_user)],
 )
-async def get_index(index_id: int, service: Annotated[IndexService, Depends()]):
+async def get_index(index_id: str, service: Annotated[IndexService, Depends()]):
     return service.get_index(index_id)
 
 
 @router.delete("/{index_id}", dependencies=[Depends(get_agent_creator_user)])
-async def delete_index(index_id: int, service: Annotated[IndexService, Depends()]):
+async def delete_index(index_id: str, service: Annotated[IndexService, Depends()]):
     service.delete_index(index_id)
 
 
@@ -75,7 +75,7 @@ async def create_index(
 
 @router.patch("/{index_id}")
 async def update_index(
-    index_id: int,
+    index_id: str,
     current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
     service: Annotated[IndexService, Depends()],
     config: dict[str, Any] | None = None,
@@ -86,7 +86,7 @@ async def update_index(
 
 @router.get("/{index_id}/settings", response_model=dict[str, Any])
 async def get_index_settings(
-    index_id: int,
+    index_id: str,
     current_user: Annotated[UserInfo, Depends(get_agent_creator_user)],
     service: Annotated[IndexService, Depends()],
 ):
@@ -95,7 +95,7 @@ async def get_index_settings(
 
 @router.get("/{index_id}/files", response_model=list[FileInfo])
 async def list_files(
-    index_id: int,
+    index_id: str,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
     service: Annotated[IndexService, Depends()],
     name_pattern: str = "",
@@ -105,7 +105,7 @@ async def list_files(
 
 @router.delete("/{index_id}/files", response_model=list[str | None])
 async def delete_all_files(
-    index_id: int,
+    index_id: str,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
     service: Annotated[IndexService, Depends()],
 ):
@@ -114,7 +114,7 @@ async def delete_all_files(
 
 @router.delete("/{index_id}/files/{file_id}", response_model=str | None)
 async def delete_file(
-    index_id: int,
+    index_id: str,
     file_id: str,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
     service: Annotated[IndexService, Depends()],
@@ -124,7 +124,7 @@ async def delete_file(
 
 @router.get("/{index_id}/groups", response_model=list[GroupInfo])
 async def list_groups(
-    index_id: int,
+    index_id: str,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
     service: Annotated[IndexService, Depends()],
 ):
@@ -133,7 +133,7 @@ async def list_groups(
 
 @router.post("/{index_id}/groups")
 async def create_group(
-    index_id: int,
+    index_id: str,
     group_name: str,
     file_ids: list[str],
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
@@ -144,7 +144,7 @@ async def create_group(
 
 @router.patch("/{index_id}/groups/{group_id}")
 async def update_group(
-    index_id: int,
+    index_id: str,
     group_id: str,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
     service: Annotated[IndexService, Depends()],
@@ -158,7 +158,7 @@ async def update_group(
 
 @router.delete("/{index_id}/groups/{group_id}")
 async def delete_group(
-    index_id: int,
+    index_id: str,
     group_id: str,
     current_user: Annotated[UserInfo, Depends(get_current_active_user)],
     service: Annotated[IndexService, Depends()],

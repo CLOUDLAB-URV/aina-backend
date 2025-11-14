@@ -49,7 +49,7 @@ class IndexManagement(BasePage):
             )
 
             with gr.Column(visible=False) as self._selected_panel:
-                self.selected_index_id = gr.Number(value=-1, visible=False)
+                self.selected_index_id = gr.Textbox(value="", visible=False)
                 with gr.Row():
                     with gr.Column():
                         self.edit_name = gr.Textbox(
@@ -214,7 +214,7 @@ class IndexManagement(BasePage):
             update_current_module_atime
         )
         self.btn_close.click(
-            lambda: -1,
+            lambda: "",
             outputs=[self.selected_index_id],
         )
 
@@ -272,24 +272,24 @@ class IndexManagement(BasePage):
 
         return indices_list
 
-    def select_index(self, index_list, ev: gr.SelectData) -> int:
+    def select_index(self, index_list, ev: gr.SelectData) -> str:
         """Return the index id"""
         if ev.value == "-" and ev.index[0] == 0:
             gr.Info("No index is constructed. Please create one first!")
-            return -1
+            return ""
 
         if not ev.selected:
-            return -1
+            return ""
 
-        return int(index_list["id"][ev.index[0]])
+        return index_list["id"][ev.index[0]]
 
-    def on_selected_index_change(self, selected_index_id: int):
+    def on_selected_index_change(self, selected_index_id: str):
         """Show the relevant index as user selects it on the UI
 
         Args:
             selected_index_id: the id of the selected index
         """
-        if selected_index_id == -1:
+        if selected_index_id == "":
             _selected_panel = gr.update(visible=False)
             edit_spec = gr.update(value="")
             edit_spec_desc = gr.update(value="")
@@ -308,7 +308,7 @@ class IndexManagement(BasePage):
             edit_name,
         )
 
-    def update_index(self, selected_index_id: int, name: str, config: str):
+    def update_index(self, selected_index_id: str, name: str, config: str):
         try:
             spec = yaml.load(config, Loader=YAMLNoDateSafeLoader)
             self.manager.update_index(selected_index_id, name, spec)
@@ -324,4 +324,4 @@ class IndexManagement(BasePage):
             gr.Warning(f"Fail to delete index: {e}")
             return selected_index_id
 
-        return -1
+        return ""

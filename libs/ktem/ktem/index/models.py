@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Optional
+import uuid
+from typing import TYPE_CHECKING
 
 from ktem.db.engine import engine
 from sqlalchemy import JSON, Column
@@ -14,7 +15,7 @@ class Index(SQLModel, table=True):
     __table_args__ = {"extend_existing": True}
     __tablename__ = "ktem__index"  # type: ignore
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     name: str = Field(unique=True)
     index_type: str = Field()
     config: dict = Field(default={}, sa_column=Column(JSON))

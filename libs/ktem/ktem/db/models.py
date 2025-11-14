@@ -90,7 +90,7 @@ class Agent(_base_agent, table=True):  # type: ignore
 
     conversations: list[Conversation] = Relationship(back_populates="agent")
 
-    index_id: Optional[int] = Field(default=None, foreign_key="ktem__index.id")
+    index_id: Optional[str] = Field(default=None, foreign_key="ktem__index.id")
     index: Optional["Index"] = Relationship(back_populates="agents")
 
     settings: dict[str, Any] = Field(

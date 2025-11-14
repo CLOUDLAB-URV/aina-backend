@@ -40,13 +40,13 @@ class IndexService:
     def _get_shortname(self, index_type: str):
         return index_type.split(".")[-1]
 
-    def _get_index(self, index_id: int) -> BaseIndex:
+    def _get_index(self, index_id: str) -> BaseIndex:
         index = app.index_manager.info().get(index_id)
         if index is None:
             raise LookupError(f"Index with id {index_id} not found")
         return index
 
-    def _get_file_index(self, index_id: int) -> FileIndex:
+    def _get_file_index(self, index_id: str) -> FileIndex:
         index = self._get_index(index_id)
         if not isinstance(index, FileIndex):
             raise TypeError(f"Index with id {index_id} is not a FileIndex")
@@ -61,11 +61,11 @@ class IndexService:
             self._get_shortname(key) for key in app.index_manager.index_types.keys()
         ]
 
-    def get_index(self, index_id: int) -> IndexInfo:
+    def get_index(self, index_id: str) -> IndexInfo:
         index = self._get_index(index_id)
         return self._get_info(index)
 
-    def delete_index(self, index_id: int):
+    def delete_index(self, index_id: str):
         app.index_manager.delete_index(index_id)
 
     def create_index(
@@ -80,7 +80,7 @@ class IndexService:
 
     def update_index(
         self,
-        index_id: int,
+        index_id: str,
         name: str | None = None,
         config: dict[str, Any] | None = None,
     ):
@@ -97,14 +97,14 @@ class IndexService:
         index.name = new_name
         index.config = new_config
 
-    def list_files(self, user_id: str, index_id: int, name_pattern: str = ""):
+    def list_files(self, user_id: str, index_id: str, name_pattern: str = ""):
         index = self._get_file_index(index_id)
         _, df = get_wrapper(index).list_file(user_id, name_pattern)
         records = df.to_dict(orient="records")
         file_infos = [FileInfo(**r) for r in records]
         return file_infos
 
-    def list_groups(self, user_id: str, index_id: int):
+    def list_groups(self, user_id: str, index_id: str):
         index = self._get_file_index(index_id)
         wrapper = get_wrapper(index)
         files, _ = wrapper.list_file(user_id)
@@ -112,7 +112,7 @@ class IndexService:
         return [GroupInfo(**r) for r in groups]
 
     def create_group(
-        self, user_id: str, index_id: int, group_name: str, file_ids: list[str]
+        self, user_id: str, index_id: str, group_name: str, file_ids: list[str]
     ):
         index = self._get_file_index(index_id)
         FileGroup = index._resources["FileGroup"]
@@ -135,7 +135,7 @@ class IndexService:
     def update_group(
         self,
         user_id: str,
-        index_id: int,
+        index_id: str,
         group_id: str,
         group_name: str | None,
         file_ids: list[str] | None,
@@ -152,7 +152,7 @@ class IndexService:
             session.add(current_group)
             session.commit()
 
-    def delete_group(self, user_id: str, index_id: int, group_id: str):
+    def delete_group(self, user_id: str, index_id: str, group_id: str):
         index = self._get_file_index(index_id)
         FileGroup = index._resources["FileGroup"]
         with Session(engine) as session:
@@ -167,11 +167,11 @@ class IndexService:
         index_cls: type[BaseIndex] = import_dotted_string(index_type, safe=False)
         return index_cls.get_admin_settings()
 
-    def get_index_settings(self, index_id: int) -> dict[str, Any]:
+    def get_index_settings(self, index_id: str) -> dict[str, Any]:
         index = self._get_index(index_id)
         return index.get_user_settings()
 
-    def delete_file(self, user_id: str, index_id: int, file_id: str) -> str | None:
+    def delete_file(self, user_id: str, index_id: str, file_id: str) -> str | None:
         idx = self._get_file_index(index_id)
         file_name = None
         with Session(engine) as session:
@@ -204,7 +204,7 @@ class IndexService:
 
         return file_name
 
-    def delete_all_files(self, user_id: str, index_id: int):
+    def delete_all_files(self, user_id: str, index_id: str):
         for file_info in self.list_files(user_id, index_id):
             self.delete_file(user_id, index_id, file_info.id)
 

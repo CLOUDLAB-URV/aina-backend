@@ -8,7 +8,7 @@ class IndexCreate(BaseModel):
 
 
 class IndexInfo(IndexCreate):
-    id: int = Field(description="The unique identifier of the index")
+    id: str = Field(description="The unique identifier of the index")
 
 
 class FileInfo(BaseModel):
