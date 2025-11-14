@@ -28,7 +28,9 @@ async def list_indices(service: Annotated[IndexService, Depends()]):
     return service.list_indices()
 
 
-@router.get("/types", dependencies=[Depends(get_agent_creator_user)])
+@router.get(
+    "/types", dependencies=[Depends(get_agent_creator_user)], response_model=list[str]
+)
 async def list_index_types(
     service: Annotated[IndexService, Depends()],
 ):
