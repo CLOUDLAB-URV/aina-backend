@@ -58,7 +58,7 @@ def load_agents_created(user_id):
         else:
             return []
 
-        statement = statement.order_by(Agent.date_created.desc())
+        # statement = statement.order_by(Agent.date_created.desc())
         agents = session.exec(statement).all()
 
         return agents
@@ -91,7 +91,7 @@ def load_agents_accessible(user_id):
         else:
             return []
 
-        statement = statement.order_by(Agent.date_created.desc())
+        # statement = statement.order_by(Agent.date_created.desc())
         agents = session.exec(statement).all()
 
         return agents
