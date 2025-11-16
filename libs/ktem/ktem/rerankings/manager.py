@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import deserialize
@@ -150,7 +150,17 @@ class RerankingManager:
             with Session(engine) as sess:
                 if default:
                     # turn all models to non-default
-                    sess.query(RerankingTable).update({"is_default": False})
+                    subq = select(RerankingTable.name).where(
+                        RerankingTable.is_default.is_(True)
+                    )
+                    names = sess.execute(subq).scalars().all()
+                    for name in names:
+                        stmt = (
+                            update(RerankingTable)
+                            .where(RerankingTable.name == name)
+                            .values(is_default=False)
+                        )
+                        sess.execute(stmt)
                     sess.commit()
 
                 item = RerankingTable(name=name, spec=spec, is_default=default)

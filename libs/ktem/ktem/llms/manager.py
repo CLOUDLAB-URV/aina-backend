@@ -1,6 +1,6 @@
 from typing import Optional, Type, overload
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 from theflow.settings import settings as flowsettings
 from theflow.utils.modules import deserialize, import_dotted_string
@@ -180,7 +180,15 @@ class LLMManager:
             with Session(engine) as session:
                 if default:
                     # turn all models to non-default
-                    session.query(LLMTable).update({"is_default": False})
+                    subq = select(LLMTable.name).where(LLMTable.is_default.is_(True))
+                    names = session.execute(subq).scalars().all()
+                    for name in names:
+                        stmt = (
+                            update(LLMTable)
+                            .where(LLMTable.name == name)
+                            .values(is_default=False)
+                        )
+                        session.execute(stmt)
                     session.commit()
 
                 item = LLMTable(name=name, spec=spec, is_default=default)
