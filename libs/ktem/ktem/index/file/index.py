@@ -364,9 +364,10 @@ class FileIndex(BaseIndex):
                 ],
                 wait=False,
             )
-        self._resources["Source"].__table__.drop(engine)  # type: ignore
-        self._resources["Index"].__table__.drop(engine)  # type: ignore
-        self._resources["FileGroup"].__table__.drop(engine)  # type: ignore
+        else:
+            self._resources["Source"].__table__.drop(engine)  # type: ignore
+            self._resources["Index"].__table__.drop(engine)  # type: ignore
+            self._resources["FileGroup"].__table__.drop(engine)  # type: ignore
         self._vs.drop()
         self._docstore.drop()
         shutil.rmtree(self._fs_path)
