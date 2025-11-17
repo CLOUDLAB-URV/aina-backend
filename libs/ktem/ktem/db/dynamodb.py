@@ -115,6 +115,7 @@ class DynamoDBTableManager:
                     partition_key_type=t.partition_key_type,
                     sort_key=sort_key,
                     sort_key_type=t.sort_key_type,
+                    wait=wait,
                 )
                 return name, TableCreateResult(created=created)
             except Exception as e:
