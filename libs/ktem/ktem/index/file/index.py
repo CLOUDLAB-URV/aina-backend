@@ -326,7 +326,7 @@ class FileIndex(BaseIndex):
 
         # create the resources
         self._setup_resources()
-        if getattr(flowsettings, "KH_ENABLE_DYNAMODB", False) and getattr(
+        if getattr(flowsettings, "KH_USE_DYNAMODB", False) and getattr(
             flowsettings, "KH_MANAGE_DYNAMODB_TABLES", False
         ):
             from ktem.db.dynamodb import DynamoDBTableManager
@@ -350,7 +350,7 @@ class FileIndex(BaseIndex):
         import shutil
 
         self._setup_resources()
-        if getattr(flowsettings, "KH_ENABLE_DYNAMODB", False) and getattr(
+        if getattr(flowsettings, "KH_USE_DYNAMODB", False) and getattr(
             flowsettings, "KH_MANAGE_DYNAMODB_TABLES", False
         ):
             from ktem.db.dynamodb import DynamoDBTableManager
