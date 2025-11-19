@@ -364,7 +364,7 @@ class IndexPipeline(BaseComponent):
 
         for doc in docs:
             doc_type = doc.metadata.get("type", "text")
-            if doc_type == "text":
+            if doc_type == "text" and doc.text:
                 text_docs.append(doc)
             elif doc_type == "thumbnail":
                 thumbnail_docs.append(doc)
