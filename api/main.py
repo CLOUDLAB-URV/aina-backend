@@ -1,7 +1,8 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
+from dotenv import load_dotenv
 from api.core.config import settings
 from api.routers import (
     agents,
@@ -15,6 +16,8 @@ from api.routers import (
     rerankings,
 )
 
+load_dotenv()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
@@ -22,7 +25,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins="*",
+    allow_origins=os.getenv('CORS_ORIGINS'),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
