@@ -71,7 +71,7 @@ class App:
             if is_created:
                 print(f"Created agent creator user: {usn}")
 
-        if hasattr(settings, "KH_FEATURE_USER_MANAGEMENT__CHATUSER") and hasattr(
+        if hasattr(settings, "KH_FEATURE_USER_MANAGEMENT_CHATUSER") and hasattr(
             settings, "KH_FEATURE_USER_MANAGEMENT_CHATUSER_PASSWORD"
         ):
             usn = settings.KH_FEATURE_USER_MANAGEMENT_CHATUSER

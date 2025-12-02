@@ -68,6 +68,8 @@ KH_DOC_DIR = this_dir / "docs"
 KH_MODE = "dev"
 KH_SSO_ENABLED = config("KH_SSO_ENABLED", default=False, cast=bool)
 
+CORS_ORIGINS = config("CORS_ORIGINS", default="*")
+
 KH_FEATURE_CHAT_SUGGESTION = config(
     "KH_FEATURE_CHAT_SUGGESTION", default=False, cast=bool
 )
@@ -80,6 +82,18 @@ KH_FEATURE_USER_MANAGEMENT_ADMIN = str(
 )
 KH_FEATURE_USER_MANAGEMENT_PASSWORD = str(
     config("KH_FEATURE_USER_MANAGEMENT_PASSWORD", default="admin")
+)
+KH_FEATURE_USER_MANAGEMENT_CHATUSER = str(
+    config("KH_FEATURE_USER_MANAGEMENT_CHATUSER", default="chatuser")
+)
+KH_FEATURE_USER_MANAGEMENT_CHATUSER_PASSWORD = str(
+    config("KH_FEATURE_USER_MANAGEMENT_CHATUSER_PASSWORD", default="chatuser")
+)
+KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR = str(
+    config("KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR", default="agentcreator")
+)
+KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR_PASSWORD = str(
+    config("KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR_PASSWORD", default="agentcreator")
 )
 KH_ENABLE_ALEMBIC = False
 KH_USE_DYNAMODB = config("KH_USE_DYNAMODB", default=False, cast=bool)
