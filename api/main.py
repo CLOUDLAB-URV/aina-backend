@@ -1,9 +1,8 @@
-import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
 from api.core.config import settings
+from theflow.settings import settings as flowsettings
 from api.routers import (
     agents,
     auth,
@@ -16,16 +15,19 @@ from api.routers import (
     rerankings,
 )
 
-load_dotenv()
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
+if hasattr(flowsettings, "CORS_ORIGINS"):
+    CORS = flowsettings.CORS_ORIGINS
+else:
+    CORS = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv('CORS_ORIGINS'),
+    allow_origins=CORS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,3 +83,8 @@ app.include_router(agents.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=settings.API_V1_STR)
 app.include_router(index.router, prefix=settings.API_V1_STR)
 app.include_router(reasonings.router, prefix=settings.API_V1_STR)
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

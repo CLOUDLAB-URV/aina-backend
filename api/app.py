@@ -61,5 +61,25 @@ class App:
             if is_created:
                 print(f"Created admin user: {usn}")
 
+        if hasattr(settings, "KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR") and hasattr(
+            settings, "KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR_PASSWORD"
+        ):
+            usn = settings.KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR
+            pwd = settings.KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR_PASSWORD
+
+            is_created = create_user(usn, pwd)
+            if is_created:
+                print(f"Created agent creator user: {usn}")
+
+        if hasattr(settings, "KH_FEATURE_USER_MANAGEMENT__CHATUSER") and hasattr(
+            settings, "KH_FEATURE_USER_MANAGEMENT_CHATUSER_PASSWORD"
+        ):
+            usn = settings.KH_FEATURE_USER_MANAGEMENT_CHATUSER
+            pwd = settings.KH_FEATURE_USER_MANAGEMENT_CHATUSER_PASSWORD
+
+            is_created = create_user(usn, pwd)
+            if is_created:
+                print(f"Created chat user: {usn}")
+
 
 app = App()
