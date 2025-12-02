@@ -95,7 +95,7 @@ def validate_password(pwd, pwd_cnf):
     return ""
 
 
-def create_user(usn, pwd, user_id=None, is_admin=True) -> bool:
+def create_user(usn, pwd, user_id=None, role=Role.ADMIN) -> bool:
     with Session(engine) as session:
         statement = select(User).where(User.username_lower == usn.lower())
         result = session.exec(statement).all()
@@ -110,7 +110,7 @@ def create_user(usn, pwd, user_id=None, is_admin=True) -> bool:
                 username=usn,
                 username_lower=usn.lower(),
                 password=hashed_password,
-                role=Role.ADMIN if is_admin else Role.CHAT_USER,
+                role=role,
             )
             session.add(user)
             session.commit()

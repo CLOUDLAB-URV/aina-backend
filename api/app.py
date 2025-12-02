@@ -1,3 +1,4 @@
+from ktem.db.base_models import Role
 from ktem.index.manager import IndexManager
 from ktem.pages.resources.user import create_user
 from ktem.reasoning.base import BaseReasoning
@@ -57,7 +58,7 @@ class App:
             usn = settings.KH_FEATURE_USER_MANAGEMENT_ADMIN
             pwd = settings.KH_FEATURE_USER_MANAGEMENT_PASSWORD
 
-            is_created = create_user(usn, pwd)
+            is_created = create_user(usn, pwd, role=Role.ADMIN)
             if is_created:
                 print(f"Created admin user: {usn}")
 
@@ -67,7 +68,7 @@ class App:
             usn = settings.KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR
             pwd = settings.KH_FEATURE_USER_MANAGEMENT_AGENT_CREATOR_PASSWORD
 
-            is_created = create_user(usn, pwd)
+            is_created = create_user(usn, pwd, role=Role.AGENT_CREATOR)
             if is_created:
                 print(f"Created agent creator user: {usn}")
 
@@ -77,7 +78,7 @@ class App:
             usn = settings.KH_FEATURE_USER_MANAGEMENT_CHATUSER
             pwd = settings.KH_FEATURE_USER_MANAGEMENT_CHATUSER_PASSWORD
 
-            is_created = create_user(usn, pwd)
+            is_created = create_user(usn, pwd, role=Role.CHAT_USER)
             if is_created:
                 print(f"Created chat user: {usn}")
 

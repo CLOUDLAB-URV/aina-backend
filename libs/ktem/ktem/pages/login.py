@@ -2,6 +2,7 @@ import hashlib
 
 import gradio as gr
 from ktem.app import BasePage
+from ktem.db.base_models import Role
 from ktem.db.models import User, engine
 from ktem.pages.resources.user import create_user
 from sqlmodel import Session, select
@@ -24,7 +25,6 @@ function(usn, pwd) {
 
 
 class LoginPage(BasePage):
-
     public_events = ["onSignIn"]
 
     def __init__(self, app):
@@ -111,7 +111,7 @@ class LoginPage(BasePage):
                     usn=user["email"],
                     pwd="",
                     user_id=user_id,
-                    is_admin=False,
+                    role=Role.CHAT_USER,
                 )
                 return user_id, "", ""
         else:
