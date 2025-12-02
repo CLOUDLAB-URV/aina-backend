@@ -26,7 +26,7 @@ dependencies = [
     "SQLAlchemy>=2.0.29,<3",
     "sqlmodel>=0.0.16,<0.1",
     "tiktoken>=0.6.0,<1",
-    "gradio==5.35.0",
+    "gradio==6.0.2",
     "gradiologin",
     "python-multipart==0.0.20",
     "markdown>=3.6,<4",
