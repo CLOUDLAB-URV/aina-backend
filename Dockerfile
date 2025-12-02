@@ -1,11 +1,13 @@
-# Lite version
-FROM python:3.10-slim AS lite
+FROM python:3.10-slim AS base
 
-# Upgrade pip first for better dependency resolution
-RUN pip install --upgrade pip
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
 
-# Common dependencies
-RUN apt-get update -qqy && \
+# Install common dependencies with caching
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update -qqy && \
     apt-get install -y --no-install-recommends \
         ssh \
         git \
@@ -15,56 +17,55 @@ RUN apt-get update -qqy && \
         libpoppler-dev \
         unzip \
         curl \
-        cargo
+        cargo && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Setup args
-ARG TARGETPLATFORM
-ARG TARGETARCH
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONIOENCODING=UTF-8
-ENV TARGETARCH=${TARGETARCH}
+# Upgrade pip
+RUN pip install --upgrade pip
 
 # Create working directory
 WORKDIR /app
 
-# Download pdfjs
+# Lite version
+FROM base AS lite
+
+ARG TARGETARCH
+ENV TARGETARCH=${TARGETARCH}
+
+# Download PDF.js (cache this layer)
 COPY scripts/download_pdfjs.sh /app/scripts/download_pdfjs.sh
 RUN chmod +x /app/scripts/download_pdfjs.sh
 ENV PDFJS_PREBUILT_DIR="/app/libs/ktem/ktem/assets/prebuilt/pdfjs-dist"
-RUN bash scripts/download_pdfjs.sh ${PDFJS_PREBUILT_DIR}
+RUN bash /app/scripts/download_pdfjs.sh ${PDFJS_PREBUILT_DIR}
 
-# Copy contents
-COPY . /app
-
-# Install pip packages
+# Install Python dependencies (cache pip downloads)
+COPY libs/kotaemon /app/libs/kotaemon
+COPY libs/ktem /app/libs/ktem
 RUN --mount=type=ssh \
     --mount=type=cache,target=/root/.cache/pip \
     pip install -e "libs/kotaemon" \
     && pip install -e "libs/ktem" \
     && pip install "pdfservices-sdk@git+https://github.com/niallcm/pdfservices-python-sdk.git@bump-and-unfreeze-requirements" \
-    && pip install "fastapi[standard]"
-
-RUN --mount=type=ssh \
-    --mount=type=cache,target=/root/.cache/pip \
+    && pip install "fastapi[standard]" && \
     if [ "${TARGETARCH}" = "amd64" ]; then pip install "graphrag<=0.3.6" future; fi
 
-# Clean up
-RUN apt-get autoremove \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf ~/.cache
+# Copy remaining app code
+COPY . /app
 
-# CMD to launch the FastAPI application using Uvicorn
-CMD ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Clean pip cache
+RUN rm -rf ~/.cache/pip
+
+# Default command
+CMD ["fastapi", "run", "api/main.py", "--host", "0.0.0.0", "--port", "8000"]
 
 # Full version
 FROM lite AS full
 
-# Additional dependencies for full version
-RUN apt-get update -qqy && \
+# Install extra system packages
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update -qqy && \
     apt-get install -y --no-install-recommends \
         tesseract-ocr \
         tesseract-ocr-jpn \
@@ -72,35 +73,25 @@ RUN apt-get update -qqy && \
         libxext6 \
         libreoffice \
         ffmpeg \
-        libmagic-dev
+        libmagic-dev && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install torch and torchvision for unstructured (using explicit versions)
+# Install heavy Python dependencies with caching
 RUN --mount=type=ssh \
     --mount=type=cache,target=/root/.cache/pip \
     pip install torch torchaudio torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# Install additional pip packages
 RUN --mount=type=ssh \
     --mount=type=cache,target=/root/.cache/pip \
     pip install -e "libs/kotaemon[adv]" \
-    && pip install unstructured[all-docs]
+                unstructured[all-docs] \
+                aioboto3 nano-vectordb ollama xxhash "lightrag-hku<=1.3.0" \
+                "docling"
 
-# Install lightRAG
-ENV USE_LIGHTRAG=true
-RUN --mount=type=ssh \
-    --mount=type=cache,target=/root/.cache/pip \
-    pip install aioboto3 nano-vectordb ollama xxhash "lightrag-hku<=1.3.0"
-
-# Corrected single-line pip install
-RUN --mount=type=ssh \
-    --mount=type=cache,target=/root/.cache/pip \
-    pip install "docling<=2.5.2"
-
-# Download NLTK data from LlamaIndex
+# Trigger NLTK data download via LlamaIndex
 RUN python -c "from llama_index.core.readers.base import BaseReader"
 
-# Clean up
-RUN apt-get autoremove \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf ~/.cache
+# Clean pip cache
+RUN rm -rf ~/.cache/pip
