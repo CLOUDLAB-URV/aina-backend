@@ -1,4 +1,5 @@
 from copy import deepcopy
+import time
 from typing import Any
 
 from ktem.db.engine import engine
@@ -67,7 +68,6 @@ class ChatService:
                     f"Conversation with id {conversation_id} is not associated "
                     f"with agent {agent_id}"
                 )
-
             return self._select_conversation(conversation)
 
     def _select_conversation(
@@ -99,6 +99,7 @@ class ChatService:
             selected=selected,
             state=state,
             likes=conversation.data_source.get("likes", []),
+            timestamps=conversation.data_source.get("timestamps", []),
         )
 
     def like_message(
@@ -159,6 +160,7 @@ class ChatService:
         user_id: str,
         request: ChatRequest,
     ):
+        start_time = time.time()
         with Session(engine) as session:
             user = session.get(User, user_id)
             if user is None:
@@ -231,6 +233,15 @@ class ChatService:
             except Exception as e:
                 raise e
 
+            finally:
+                timestamp = (time.time() - start_time)
+
+                yield Document(
+                    channel="timestamp",
+                    content=timestamp,
+                ).model_dump_json()
+
+
             if not text:
                 text = getattr(
                     flowsettings,
@@ -253,6 +264,7 @@ class ChatService:
                 state=chat_state,
                 select_mode=request.select_mode,
                 selected_files=request.selected_files,
+                timestamps=timestamp
             )
 
     def _persist_data_source(
@@ -266,6 +278,7 @@ class ChatService:
         retrieval_history: list[str],
         plot_history,
         messages: list[tuple[str, str]],
+        timestamps: Any,
         state: dict[str, Any],
         select_mode: SelectMode,
         selected_files: list[str],
@@ -288,6 +301,9 @@ class ChatService:
             str(agent.index_id): [select_mode.value, selected_files, user.id],
         }
 
+        existing_timestamps = data_source.get("timestamps") or []
+        new_timestamps = existing_timestamps + [timestamps]
+
         conversation.data_source = {
             "selected": selected,
             "messages": messages,
@@ -295,6 +311,7 @@ class ChatService:
             "plot_history": plot_history,
             "state": state,
             "likes": deepcopy(data_source.get("likes", [])),
+            "timestamps": new_timestamps,
         }
         session.add(conversation)
         session.commit()

@@ -53,3 +53,6 @@ class ConversationInfo(BaseModel):
     likes: list[Any] = Field(
         description="List of likes/dislikes for messages in the conversation",
     )
+    timestamps: list[Any] = Field(
+        description="List of timestamps for messages in the conversation",
+    )
