@@ -1,5 +1,5 @@
-from copy import deepcopy
 import time
+from copy import deepcopy
 from typing import Any
 
 from ktem.db.engine import engine
@@ -234,13 +234,12 @@ class ChatService:
                 raise e
 
             finally:
-                timestamp = (time.time() - start_time)
+                timestamp = time.time() - start_time
 
                 yield Document(
                     channel="timestamp",
                     content=timestamp,
                 ).model_dump_json()
-
 
             if not text:
                 text = getattr(
@@ -264,7 +263,7 @@ class ChatService:
                 state=chat_state,
                 select_mode=request.select_mode,
                 selected_files=request.selected_files,
-                timestamps=timestamp
+                timestamps=timestamp,
             )
 
     def _persist_data_source(
