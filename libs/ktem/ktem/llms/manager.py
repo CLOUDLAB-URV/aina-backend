@@ -182,10 +182,10 @@ class LLMManager:
                     # turn all models to non-default
                     subq = select(LLMTable.name).where(LLMTable.is_default.is_(True))
                     names = session.execute(subq).scalars().all()
-                    for name in names:
+                    for n in names:
                         stmt = (
                             update(LLMTable)
-                            .where(LLMTable.name == name)
+                            .where(LLMTable.name == n)
                             .values(is_default=False)
                         )
                         session.execute(stmt)

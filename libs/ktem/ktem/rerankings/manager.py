@@ -154,10 +154,10 @@ class RerankingManager:
                         RerankingTable.is_default.is_(True)
                     )
                     names = sess.execute(subq).scalars().all()
-                    for name in names:
+                    for n in names:
                         stmt = (
                             update(RerankingTable)
-                            .where(RerankingTable.name == name)
+                            .where(RerankingTable.name == n)
                             .values(is_default=False)
                         )
                         sess.execute(stmt)

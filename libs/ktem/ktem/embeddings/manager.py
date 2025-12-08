@@ -178,10 +178,10 @@ class EmbeddingManager:
                         EmbeddingTable.is_default.is_(True)
                     )
                     names = sess.execute(subq).scalars().all()
-                    for name in names:
+                    for n in names:
                         stmt = (
                             update(EmbeddingTable)
-                            .where(EmbeddingTable.name == name)
+                            .where(EmbeddingTable.name == n)
                             .values(is_default=False)
                         )
                         sess.execute(stmt)
