@@ -57,8 +57,13 @@ COPY . /app
 # Clean pip cache
 RUN rm -rf ~/.cache/pip
 
-# Default command
-CMD ["fastapi", "run", "api/main.py", "--host", "0.0.0.0", "--port", "8000"]
+# Set entrypoint
+ENTRYPOINT [ "fastapi", "run", "api/main.py", "--host", "0.0.0.0"]
+
+EXPOSE 8000
+
+# Default arguments
+CMD ["--port", "8000"]
 
 # Full version
 FROM lite AS full
