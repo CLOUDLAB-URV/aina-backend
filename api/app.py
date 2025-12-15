@@ -1,3 +1,4 @@
+import pandas as pd
 from ktem.db.base_models import Role
 from ktem.index.manager import IndexManager
 from ktem.pages.resources.user import create_user
@@ -81,6 +82,29 @@ class App:
             is_created = create_user(usn, pwd, role=Role.CHAT_USER)
             if is_created:
                 print(f"Created chat user: {usn}")
+
+        if hasattr(settings, "KH_FEATURE_USER_MANAGEMENT_USERS_FILE"):
+            user_file = settings.KH_FEATURE_USER_MANAGEMENT_USERS_FILE
+            try:
+                df = pd.read_csv(user_file)
+                # Expected columns: username, password, role (optional)
+                for _, row in df.iterrows():
+                    usn = row["username"]
+                    pwd = row["password"]
+                    role_str = row.get("role", "chat_user").strip().lower()
+                    role = (
+                        Role(role_str)
+                        if role_str.upper() in Role.__members__
+                        else Role.CHAT_USER
+                    )
+
+                    is_created = create_user(usn, pwd, role=role)
+                    if is_created:
+                        print(f"Created user from file: {usn} with role {role.name}")
+            except FileNotFoundError:
+                print(
+                    f"User file '{user_file}' not found. Skipping bulk user creation."
+                )
 
 
 app = App()
