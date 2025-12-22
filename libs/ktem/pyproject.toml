@@ -29,7 +29,7 @@ dependencies = [
     "tiktoken>=0.6.0,<1",
     "gradio==5.35.0",
     "gradiologin",
-    "python-multipart==0.0.20",
+    "python-multipart==0.0.21",
     "markdown>=3.6,<4",
     "tzlocal>=5.0",
     "langgraph>=0.5,<0.7",
