@@ -27,7 +27,7 @@ dependencies = [
     "cohere>=5.3.2,<6",
     "cookiecutter>=2.6.0,<2.7",
     "fast_langdetect",
-    "gradio==5.35.0",
+    "gradio==6.2.0",
     "fastapi<=0.120.0",
     "html2text==2024.2.26",
     "langchain>=0.3,<0.4",
