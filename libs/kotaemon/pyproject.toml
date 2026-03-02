@@ -25,7 +25,7 @@ dependencies = [
     "beautifulsoup4>=4.12.3,<4.15",
     "click>=8.1.7,<9",
     "cohere>=5.3.2,<6",
-    "cookiecutter>=2.6.0,<2.7",
+    "cookiecutter>=2.6.0,<2.8",
     "fast_langdetect",
     "gradio==5.35.0",
     "fastapi<=0.120.0",
